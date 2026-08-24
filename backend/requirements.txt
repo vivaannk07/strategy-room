@@ -1,0 +1,4 @@
+# Pinned to what the backend/.venv was built with.
+# fastapi[standard] brings in uvicorn, httpx, python-dotenv and the `fastapi` CLI.
+fastapi[standard]==0.141.1
+uvicorn[standard]==0.52.4
