@@ -4,3 +4,6 @@ fastapi[standard]==0.141.1
 uvicorn[standard]==0.52.4
 # Postgres driver for the Jolpica cache layer (sync mode; see app/db.py).
 psycopg[binary]==3.3.4
+# Connection pooling. The database is remote, where opening a connection costs ~1.4s
+# against ~0.4s for a query, so reusing them is most of the read path's latency.
+psycopg_pool==3.2.6
