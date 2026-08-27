@@ -25,7 +25,7 @@ Our API returns snake_case and typed values. Jolpica returns camelCase/PascalCas
 | `constructor_name` | `Results[].Constructor.name` | e.g. `Ferrari` |
 | `grid` | `Results[].grid` | |
 | `laps_completed` | `Results[].laps` | |
-| `status` | `Results[].status` | e.g. `Finished`, `+1 Lap`, `Retired` |
+| `status` | `Results[].status` | e.g. `Finished`, `Lapped`, `Retired` |
 | `finish_position` | `Results[].position` | Always numeric, even for retirements |
 | `position_text` | `Results[].positionText` | `"1"`, `"R"`, `"D"`… — the real classification |
 | `finish_time_ms` | `Results[].Time.millis` | **Absent entirely for non-classified drivers** |

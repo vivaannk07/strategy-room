@@ -50,7 +50,7 @@ Final classification per driver, from `/results.json`.
 | position_text | text | `positionText` — `"1"`, `"R"`, `"D"`… the real classification |
 | points | numeric | `points` |
 | laps_completed | integer | `laps` |
-| status | text | `status`, e.g. `Finished`, `+1 Lap`, `Retired` |
+| status | text | `status`, e.g. `Finished`, `Lapped`, `Retired` |
 | finish_time_ms | bigint | `Time.millis`. **Nullable** — `Time` is absent for retirements |
 
 `FOREIGN KEY (race_season, race_round) REFERENCES races (season, round)`

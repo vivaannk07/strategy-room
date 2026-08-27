@@ -2,3 +2,5 @@
 # fastapi[standard] brings in uvicorn, httpx, python-dotenv and the `fastapi` CLI.
 fastapi[standard]==0.141.1
 uvicorn[standard]==0.52.4
+# Postgres driver for the Jolpica cache layer (sync mode; see app/db.py).
+psycopg[binary]==3.3.4
