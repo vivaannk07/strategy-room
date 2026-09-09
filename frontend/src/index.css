@@ -1,1 +1,8 @@
 @import "tailwindcss";
+
+/* Pinned stage height for <ScrollStory>. `svh` keeps the stage from resizing
+   as mobile browser chrome hides on scroll; `vh` is the fallback. */
+@utility h-stage {
+  height: 100vh;
+  height: 100svh;
+}

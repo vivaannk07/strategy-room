@@ -40,4 +40,4 @@ Screen-by-screen frontend plan: see `frontend-plan.md`.
 ## Folder structure (target)
 
 ## Current status
-Planning complete. Frontend and backend scaffolds not yet created — start with `npm create vite@latest frontend` and a FastAPI project in `backend/` via tooling, don't hand-build these folders.
+Backend implemented through the simulation endpoints (see recent commits). Frontend scaffold exists: Vite + Tailwind v4 + Framer Motion, with a scroll-scrubbed landing flow — `src/components/ScrollStory.jsx` (reusable pinned/crossfade engine) driving five placeholder scenes in `src/components/landing/`, mounted via `src/pages/LandingPage.jsx`. Landing scene content is still placeholder — no API or simulation data wired in. Screens 1–4 from `frontend-plan.md` are not built yet, and there's no router installed.
