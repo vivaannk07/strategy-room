@@ -10,8 +10,9 @@ from fastapi.concurrency import run_in_threadpool
 
 from app import repository, simulation
 from app.db import connect
+from app.pace_model import MODEL_VERSION
 from app.routers.races import ensure_cached
-from app.schemas import SimulationRequest, SimulationResponse
+from app.schemas import SimulationRequest, SimulationResponse, UnsupportedConditionsResponse
 
 router = APIRouter(prefix="/api", tags=["simulate"])
 
@@ -23,6 +24,19 @@ MAX_SIMULATIONS = 5000
 def _load_baseline(season: int, round_: int) -> repository.RaceBaseline | None:
     with connect() as conn:
         return repository.load_race_baseline(conn, season, round_)
+
+
+def _load_baseline_with_fit(season: int, round_: int) -> repository.RaceBaseline | None:
+    """Load the baseline, fitting the race's pace model first if it is missing or stale.
+
+    The fit is a few hundred milliseconds and is cached in Postgres, so this only bites
+    on the first simulate after an ingest or a `MODEL_VERSION` bump.
+    """
+    with connect() as conn:
+        model = repository.load_pace_model(conn, season, round_)
+    if model is None or model.model_version < MODEL_VERSION:
+        repository.ensure_pace_model(season, round_)
+    return _load_baseline(season, round_)
 
 
 def _run(request: SimulationRequest, baseline: repository.RaceBaseline) -> SimulationResponse:
@@ -37,6 +51,20 @@ def _run(request: SimulationRequest, baseline: repository.RaceBaseline) -> Simul
         )
     try:
         return simulation.run_simulation(request, baseline)
+    except simulation.UnsupportedConditionsError as exc:
+        # 409 rather than 400: the request is fine, the *race* is the problem. The
+        # frontend keys off `code` to show "this race can't be simulated" instead of
+        # blaming the user's pit laps, and instead of a plausible-looking wrong number.
+        conditions = baseline.pace_model.conditions if baseline.pace_model else "unknown"
+        raise HTTPException(
+            status_code=409,
+            detail=UnsupportedConditionsResponse(
+                message=str(exc),
+                season=request.season,
+                round=request.round,
+                conditions=conditions,
+            ).model_dump(),
+        ) from exc
     except simulation.InvalidStrategyError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -47,6 +75,10 @@ def _run(request: SimulationRequest, baseline: repository.RaceBaseline) -> Simul
     responses={
         400: {"description": "Invalid strategy (pit lap outside race length, unknown compound)"},
         404: {"description": "Race or driver not found"},
+        409: {
+            "description": "Race ran in wet/mixed conditions and cannot be simulated",
+            "model": UnsupportedConditionsResponse,
+        },
     },
 )
 async def simulate(request: SimulationRequest) -> SimulationResponse:
@@ -60,10 +92,14 @@ async def simulate(request: SimulationRequest) -> SimulationResponse:
     # Same fetch-on-demand path as GET /api/races/{season}/{round}: a race can be
     # simulated without having been opened in the UI first, and a miss on the read is
     # what tells us to go and get it.
-    baseline = await run_in_threadpool(_load_baseline, request.season, request.round)
+    baseline = await run_in_threadpool(
+        _load_baseline_with_fit, request.season, request.round
+    )
     if baseline is None:
         await ensure_cached(request.season, request.round)
-        baseline = await run_in_threadpool(_load_baseline, request.season, request.round)
+        baseline = await run_in_threadpool(
+            _load_baseline_with_fit, request.season, request.round
+        )
     if baseline is None:
         raise HTTPException(
             status_code=404,

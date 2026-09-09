@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db import close_pool  # noqa: E402
 from app.ingest import RaceNotFoundError, ingest_race  # noqa: E402
+from app.repository import ensure_pace_model  # noqa: E402
 
 
 def main() -> int:
@@ -27,6 +28,9 @@ def main() -> int:
 
     try:
         report = ingest_race(args.season, args.round)
+        # The pace model is fitted across the whole field at once, so it can only be
+        # derived once all three fetches have landed.
+        model = ensure_pace_model(args.season, args.round)
     except RaceNotFoundError as exc:
         print(f"not found: {exc}", file=sys.stderr)
         return 2
@@ -37,6 +41,13 @@ def main() -> int:
         close_pool()
 
     print(report.as_text())
+    if model is not None:
+        print(
+            f"pace model      conditions={model.conditions} "
+            f"fuel={model.fuel_effect_per_lap} ({model.fuel_effect_source}) "
+            f"field_median_degradation={model.field_median_degradation} "
+            f"A_race={model.max_observed_stint_laps}"
+        )
     return 0
 
 

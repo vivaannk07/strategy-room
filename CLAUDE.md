@@ -24,6 +24,7 @@ A full-stack web app where a user picks a real past Formula 1 race, changes a dr
 4. Frontend shows the simulated result (finish time/position) against the real result, plus a lap-by-lap track-position chart comparing both.
 
 Full simulation logic: see `simulation-logic.md`.
+Tire degradation derivation (Step 0 of the sim): see `degradation-model.md`.
 Full API surface: see `api-contract.md`.
 Full schema: see `data-model.md`.
 Screen-by-screen frontend plan: see `frontend-plan.md`.

@@ -9,6 +9,8 @@
 
 BEGIN;
 
+DROP TABLE IF EXISTS driver_stint_fits;
+DROP TABLE IF EXISTS race_pace_models;
 DROP TABLE IF EXISTS pit_stops;
 DROP TABLE IF EXISTS laps;
 DROP TABLE IF EXISTS race_results;
@@ -104,6 +106,55 @@ CREATE TABLE pit_stops (
 );
 
 -- ---------------------------------------------------------------------------
+-- race_pace_models — one row per race, derived from `laps` (not from Jolpica).
+--
+-- Derived analytics, not cache: recomputed whenever `model_version` moves, without
+-- touching the ingested rows above. See degradation-model.md.
+-- ---------------------------------------------------------------------------
+CREATE TABLE race_pace_models (
+    race_season             integer   NOT NULL,
+    race_round              integer   NOT NULL,
+    fuel_effect_per_lap     numeric   NOT NULL,   -- pooled, clamped to [0.02, 0.12]
+    fuel_effect_source      text      NOT NULL,   -- 'fitted' | 'clamped' | 'default'
+    field_median_degradation numeric,             -- tier-3 fallback; NULL if nothing fit
+    max_observed_stint_laps integer   NOT NULL,   -- A_race, the extrapolation anchor
+    neutralized_laps        integer[] NOT NULL DEFAULT '{}',  -- SC/VSC laps detected
+    conditions              text      NOT NULL,   -- 'dry' | 'mixed'; 'mixed' is refused
+    -- This race's green-flag pace. What *other* races at the same circuit are checked
+    -- against, so a race that was wet start to finish is detectable at all.
+    green_reference_pace_seconds numeric,
+    model_version           integer   NOT NULL,
+    computed_at             timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (race_season, race_round),
+    FOREIGN KEY (race_season, race_round) REFERENCES races (season, round)
+);
+
+-- ---------------------------------------------------------------------------
+-- driver_stint_fits — one row per driver per stint of the joint per-race fit.
+--
+-- Kept per stint rather than collapsed per driver so a surprising degradation number
+-- can be traced back to the stint that produced it.
+-- ---------------------------------------------------------------------------
+CREATE TABLE driver_stint_fits (
+    id                  serial PRIMARY KEY,
+    race_season         integer NOT NULL,
+    race_round          integer NOT NULL,
+    driver_id           text    NOT NULL REFERENCES drivers (id),
+    stint_number        integer NOT NULL,          -- 1-indexed; stint n follows stop n-1
+    start_lap           integer NOT NULL,
+    end_lap             integer NOT NULL,
+    laps_used           integer NOT NULL,          -- after filtering, not end - start
+    base_pace_seconds   numeric,                   -- fitted lap time at tire age 0
+    degradation_per_lap numeric,                   -- NULL when quality = 'unreliable'
+    degradation_stderr  numeric,                   -- feeds the Monte Carlo resampling
+    r_squared           numeric,
+    max_tire_age        integer NOT NULL,          -- contributes to A_driver
+    quality             text    NOT NULL,          -- 'good' | 'sparse' | 'unreliable'
+    FOREIGN KEY (race_season, race_round) REFERENCES races (season, round),
+    UNIQUE (race_season, race_round, driver_id, stint_number)
+);
+
+-- ---------------------------------------------------------------------------
 -- Lookup indexes for the read paths the API actually uses.
 -- The UNIQUE constraints above already cover (race_season, race_round, ...)
 -- prefix lookups, so these only add the driver-centric access patterns.
@@ -111,5 +162,8 @@ CREATE TABLE pit_stops (
 CREATE INDEX idx_race_results_driver ON race_results (driver_id);
 CREATE INDEX idx_laps_driver         ON laps (driver_id);
 CREATE INDEX idx_pit_stops_driver    ON pit_stops (driver_id);
+-- The tier-2 (team-mate) lookup reads every stint fit for a race at once, which the
+-- UNIQUE constraint above already covers. This one serves the cross-race driver view.
+CREATE INDEX idx_stint_fits_driver   ON driver_stint_fits (driver_id);
 
 COMMIT;

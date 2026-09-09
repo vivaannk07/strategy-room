@@ -154,8 +154,16 @@ Runs the Monte Carlo simulation for a hypothetical strategy against a race's bas
 **Compound note.** `compound_in` is **user input only** — it's what the user picks on the
 timeline UI, not something we can read back from Jolpica. Because the real stint compounds
 are unknown, the baseline is the driver's actual *lap times*, not a reconstructed
-compound-by-compound model. For v1 the simulation applies degradation curves to the
-hypothetical strategy and compares against recorded actual lap times.
+compound-by-compound model. The simulation applies degradation to the hypothetical
+strategy and compares against recorded actual lap times.
+
+What that degradation is has changed. The **magnitude** of tire falloff is measured from
+the driver's own recorded lap times for that race (`simulation-logic.md` Step 0), so a
+Ferrari and a Sauber no longer degrade identically. The compound the user picks supplies
+only the **ratio** — soft ×1.6, medium ×1.0, hard ×0.6 against that measured magnitude —
+plus an absolute fresh-tire pace offset. We derive how fast a car's lap time fell away;
+we still never assert which compound produced it. The response's `pace_model` block says
+where the number came from.
 
 **Response 200**
 ```json
@@ -177,7 +185,19 @@ hypothetical strategy and compares against recorded actual lap times.
   "lap_by_lap": [
     { "lap": 1, "hypothetical_position": 2, "actual_position": 2 },
     { "lap": 2, "hypothetical_position": 2, "actual_position": 2 }
-  ]
+  ],
+  "pace_model": {
+    "tier": 1,
+    "tier_source": "driver",
+    "source_driver_id": "leclerc",
+    "degradation_per_lap": 0.05933,
+    "degradation_floored": false,
+    "degradation_stderr": 0.0067,
+    "fuel_effect_per_lap": 0.05946,
+    "beyond_evidence": false,
+    "hypothetical_max_tire_age": 37,
+    "max_observed_stint_laps": 41
+  }
 }
 ```
 
@@ -186,5 +206,68 @@ hypothetical strategy and compares against recorded actual lap times.
   chart (median run, not all 500). `actual_position` comes from
   `Laps[].Timings[].position`.
 
+### The `pace_model` block
+
+Always present. It exists so the frontend can caveat honestly: a tier-1 and a tier-4
+answer are the same shape and deserve very different confidence.
+
+| Field | Meaning |
+|---|---|
+| `tier` | `1` this driver's own laps, `2` their team-mate's, `3` the field median for this race, `4` the generic compound table |
+| `tier_source` | `driver` \| `team-mate` \| `field` \| `generic` — the same thing, in words |
+| `source_driver_id` | Whose laps the number came from. The driver at tier 1, their team-mate at tier 2, `null` at tiers 3 and 4 |
+| `degradation_per_lap` | The measured falloff, medium-equivalent. The compound multiplier is applied on top of this, so it's the number to show, not the effective one |
+| `degradation_floored` | `true` when the fitted slope came in under the physical floor and the floor is what `degradation_per_lap` reports. The number is then a lower bound on this car's tire wear, not a measurement of it |
+| `degradation_stderr` | Standard error the Monte Carlo resamples with, already widened for extrapolation. A large value next to a small `degradation_per_lap` means "we don't really know" |
+| `fuel_effect_per_lap` | Seconds gained per lap as fuel burns off, pooled across the field for this race |
+| `beyond_evidence` | `true` when the strategy asks for a longer stint than **anyone** ran in this race. The result is an extrapolation; the chart should say so |
+| `hypothetical_max_tire_age` | Longest stint the submitted strategy runs, in laps |
+| `max_observed_stint_laps` | Longest stint anyone actually ran in this race — what `beyond_evidence` is measured against |
+
+Suggested UI treatment: tier 1 needs no caveat; tier 2 should name the team-mate ("modeled
+from Ricciardo's tire wear — Tsunoda retired on lap 7"); tier 3 and 4 should be visibly
+approximate; `beyond_evidence` should mark the chart region past
+`max_observed_stint_laps`. `degradation_floored` deserves its own line rather than being
+folded into the tier, because it can be `true` at tier 1: the fit is the driver's own, it
+just came back flatter than any tire behaves ("at least 0.029 s/lap — Norris's own laps
+fit flatter than that, which we don't believe").
+
 **Response 400** — invalid strategy (pit lap outside race length, unknown compound).
+
 **Response 404** — race or driver not found.
+
+**Response 409** — the *race* can't be simulated. Currently this means only one thing: the
+race ran in wet or changing conditions, which the tire model does not support.
+
+```json
+{
+  "detail": {
+    "code": "unsupported_conditions",
+    "message": "Season 2023 round 13 ran in wet or changing conditions, which the tire model does not support.",
+    "season": 2023,
+    "round": 13,
+    "conditions": "mixed"
+  }
+}
+```
+
+Detected two ways, because they catch different races: a race that *changes* conditions
+shows a sustained block of laps off its own median, while a race that was wet from lights
+to flag looks perfectly normal against itself and is only visible against the same
+circuit's pace in other cached races. The second check needs at least one other race at
+that circuit already fitted as dry; on a circuit we have only seen once, a lights-to-flag
+wet race is still undetectable and will be simulated. See degradation-model.md, Step B.
+
+A wet or drying race makes lap times move for reasons that have nothing to do with tire
+age, so any degradation fitted from it is garbage. We could fall back to the generic
+compound table and still return a number — and that is the wrong answer, because the
+number would look exactly as confident as a real one. The frontend should show "this race
+can't be simulated — wet/mixed conditions" and offer a different race.
+
+**409, not 400**, deliberately: nothing about the submitted strategy is wrong, so the UI
+must not blame the user's pit laps. Branch on `detail.code`; `conditions` is included so
+the message can be specific. FastAPI's own validation errors are 422 with a *list* under
+`detail`, so the two never collide.
+
+The race is still ingested and `GET /api/races/{season}/{round}` still returns it in full —
+only simulation is refused.
