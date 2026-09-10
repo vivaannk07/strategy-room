@@ -95,6 +95,11 @@ function ScrollStoryScene({
 
   return (
     <motion.section
+      // `inert` keeps the off-screen scenes out of the focus order and out of
+      // hit-testing. Without it they stay in the DOM at opacity 0, so a keyboard
+      // user could tab into an invisible scene's controls — and focusable content
+      // inside aria-hidden is a WCAG 4.1.2 failure.
+      inert={!isActive}
       aria-hidden={!isActive}
       aria-label={scene.label}
       style={{ opacity, y, scale, pointerEvents }}
