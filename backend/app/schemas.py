@@ -60,6 +60,15 @@ class RaceDetail(RaceSummary):
     drivers: list[RaceDriver]
 
 
+class DriverLap(BaseModel):
+    """One recorded lap, as returned by GET /api/races/{season}/{round}/drivers/{driver_id}/laps."""
+
+    lap: int
+    # Both nullable: upstream occasionally records a lap with no position or no time.
+    position: int | None
+    lap_time_seconds: float | None
+
+
 class StrategyStop(BaseModel):
     """A hypothetical pit stop. `compound_in` is user input only."""
 

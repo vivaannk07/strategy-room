@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import SceneFrame from './SceneFrame'
 import CircuitBackdrop from './CircuitBackdrop'
 import TrackOutline from './TrackOutline'
-import { fetchRaces } from '../../lib/api'
+import RequestError from './RequestError'
+import { fetchRaces, isRetryable } from '../../lib/api'
+import { formatStopCount } from '../../lib/raceData'
 
 /**
  * Formats a race's `YYYY-MM-DD` date for display.
@@ -22,16 +24,122 @@ function formatDate(isoDate) {
   })
 }
 
+/** `P3` for a classified finish; the status (`Retired`, `Disqualified`…) otherwise. */
+function finishLabel(driver) {
+  return /^\d+$/.test(driver.actual_position_text)
+    ? `P${driver.actual_position_text}`
+    : driver.actual_status || driver.actual_position_text
+}
+
 /**
- * Scene 1 — the race selector, backed by GET /api/races.
+ * The second half of scene 1: who took part in the picked race, from its race detail.
+ * Stands in for the race list inside the same card once a race is picked.
+ */
+function DriverPicker({ race, raceDetail, selectedDriverId, onSelectDriver, onChangeRace }) {
+  const drivers = raceDetail.data?.drivers ?? []
+  const selectedDriver = drivers.find((driver) => driver.driver_id === selectedDriverId)
+
+  return (
+    <>
+      <div className="flex items-baseline justify-between gap-3 text-left">
+        <p className="min-w-0 truncate text-sm font-medium text-neutral-100">
+          {race.race_name}{' '}
+          <span className="text-xs text-neutral-500 tabular-nums">
+            {race.season} · R{race.round}
+          </span>
+        </p>
+        <button
+          type="button"
+          onClick={onChangeRace}
+          className="shrink-0 text-xs tracking-wider text-neutral-400 uppercase hover:text-neutral-200"
+        >
+          Change race
+        </button>
+      </div>
+
+      {raceDetail.status === 'loading' && (
+        <p className="py-8 text-sm text-neutral-500">
+          Loading drivers… the first time a race is opened it's fetched from Jolpica, so
+          this can take a while.
+        </p>
+      )}
+
+      {raceDetail.status === 'error' && (
+        <RequestError
+          message={raceDetail.error.message}
+          onRetry={isRetryable(raceDetail.error) ? raceDetail.retry : undefined}
+        />
+      )}
+
+      {raceDetail.status === 'ready' && drivers.length === 0 && (
+        <p className="py-8 text-sm text-neutral-500">No drivers are recorded for this race.</p>
+      )}
+
+      {raceDetail.status === 'ready' && drivers.length > 0 && (
+        <ul className="mt-3 max-h-56 space-y-1.5 overflow-y-auto text-left [scrollbar-color:#404040_transparent] [scrollbar-width:thin] sm:max-h-64">
+          {drivers.map((driver) => {
+            const isSelected = driver.driver_id === selectedDriverId
+
+            return (
+              <li key={driver.driver_id}>
+                <button
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => onSelectDriver(driver.driver_id)}
+                  className={`flex w-full items-baseline gap-3 rounded-lg border px-4 py-2.5 text-left transition-colors ${
+                    isSelected
+                      ? 'border-red-500 bg-red-500/10'
+                      : 'border-neutral-800 hover:border-neutral-600'
+                  }`}
+                >
+                  <span className="w-12 shrink-0 truncate text-xs text-neutral-500 tabular-nums">
+                    {finishLabel(driver)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-neutral-100">
+                    {driver.driver_name}
+                    <span className="ml-2 text-xs text-neutral-500">
+                      {driver.constructor_name}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs text-neutral-600 tabular-nums">
+                    {formatStopCount(driver.actual_pit_stops.length)}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      <p className="mt-4 text-xs tracking-[0.2em] text-neutral-600 uppercase">
+        {selectedDriver
+          ? `Selected · ${selectedDriver.driver_name}`
+          : 'Select a driver to continue'}
+      </p>
+    </>
+  )
+}
+
+/**
+ * Scene 1 — the race selector, backed by GET /api/races, then the driver selector for
+ * the picked race.
  *
- * Fetching lives here, but the chosen race is lifted to the parent: later scenes are
- * driven by the same selection, so it can't be owned by this scene.
+ * The race list is fetched here. The race detail (which carries the driver list) is
+ * fetched by the parent instead, because scenes 2–5 read the same response; this scene
+ * only renders it. Both selections are lifted for the same reason.
  *
  * The circuit art around the list is decorative only — <CircuitBackdrop> fills the stage
  * behind the scene, <TrackOutline> sits beside the list. Both fade with the scene.
+ *
+ * @param {object} raceDetail  `useApiResource` state for GET /api/races/{season}/{round}.
  */
-export default function PickRaceScene({ selectedRace, onSelectRace }) {
+export default function PickRaceScene({
+  selectedRace,
+  onSelectRace,
+  raceDetail,
+  selectedDriverId,
+  onSelectDriver,
+}) {
   // One object rather than three pieces of state: status, data and error always change
   // together, and it keeps the effect free of synchronous setState calls.
   const [request, setRequest] = useState({
@@ -62,6 +170,9 @@ export default function PickRaceScene({ selectedRace, onSelectRace }) {
   }
 
   const { status, races, error } = request
+  // The race list's state lives in this component, so hiding the list while the driver
+  // picker shows keeps it — "Change race" brings it straight back without a refetch.
+  const showRaces = !selectedRace
 
   return (
     <>
@@ -72,7 +183,7 @@ export default function PickRaceScene({ selectedRace, onSelectRace }) {
         <SceneFrame
           step={1}
           title="Pick a race"
-          subtitle="Any Grand Prix on record. The one you still argue about."
+          subtitle="Any Grand Prix on record, then the driver whose call you'd change."
         >
           <div className="grid gap-4 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-stretch">
             {/* Art comes after the list on narrow screens — the list is the job. */}
@@ -86,75 +197,67 @@ export default function PickRaceScene({ selectedRace, onSelectRace }) {
               </p>
             </div>
 
-            <div className="order-1 w-full rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-6 lg:order-2">
-              {status === 'loading' && (
+            {/* min-w-0: a grid item won't shrink below its content by default, and the
+                driver rows' truncating names would otherwise push the card off-screen. */}
+            <div className="order-1 w-full min-w-0 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-6 lg:order-2">
+              {selectedRace && (
+                <DriverPicker
+                  race={selectedRace}
+                  raceDetail={raceDetail}
+                  selectedDriverId={selectedDriverId}
+                  onSelectDriver={onSelectDriver}
+                  onChangeRace={() => onSelectRace(null)}
+                />
+              )}
+
+              {showRaces && status === 'loading' && (
                 <p className="py-8 text-sm text-neutral-500">Loading races…</p>
               )}
 
-              {status === 'error' && (
-                <div className="py-8">
-                  <p className="text-sm text-red-400">{error}</p>
-                  <button
-                    type="button"
-                    onClick={retry}
-                    className="mt-4 rounded-full border border-neutral-700 px-4 py-1.5 text-xs tracking-wider text-neutral-300 uppercase hover:border-neutral-500"
-                  >
-                    Try again
-                  </button>
-                </div>
+              {showRaces && status === 'error' && (
+                <RequestError message={error} onRetry={retry} />
               )}
 
-              {status === 'ready' && races.length === 0 && (
+              {showRaces && status === 'ready' && races.length === 0 && (
                 <p className="py-8 text-sm text-neutral-500">No races cached yet.</p>
               )}
 
-              {status === 'ready' && races.length > 0 && (
+              {showRaces && status === 'ready' && races.length > 0 && (
                 <ul className="max-h-60 space-y-1.5 overflow-y-auto text-left [scrollbar-color:#404040_transparent] [scrollbar-width:thin] sm:max-h-72">
-                  {races.map((race) => {
-                    const isSelected =
-                      selectedRace?.season === race.season &&
-                      selectedRace?.round === race.round
-
-                    return (
-                      <li key={`${race.season}-${race.round}`}>
-                        <button
-                          type="button"
-                          aria-pressed={isSelected}
-                          onClick={() => onSelectRace(race)}
-                          className={`w-full rounded-lg border px-4 py-3 text-left transition-colors ${
-                            isSelected
-                              ? 'border-red-500 bg-red-500/10'
-                              : 'border-neutral-800 hover:border-neutral-600'
-                          }`}
-                        >
-                          <span className="flex items-baseline justify-between gap-3">
-                            <span className="text-sm font-medium text-neutral-100">
-                              {race.race_name}
-                            </span>
-                            <span className="shrink-0 text-xs text-neutral-500 tabular-nums">
-                              {race.season} · R{race.round}
-                            </span>
+                  {races.map((race) => (
+                    <li key={`${race.season}-${race.round}`}>
+                      <button
+                        type="button"
+                        onClick={() => onSelectRace(race)}
+                        className="w-full rounded-lg border border-neutral-800 px-4 py-3 text-left transition-colors hover:border-neutral-600"
+                      >
+                        <span className="flex items-baseline justify-between gap-3">
+                          <span className="text-sm font-medium text-neutral-100">
+                            {race.race_name}
                           </span>
-                          <span className="mt-1 flex items-baseline justify-between gap-3">
-                            <span className="text-xs text-neutral-500">
-                              {race.circuit_name}
-                            </span>
-                            <span className="shrink-0 text-xs text-neutral-600">
-                              {formatDate(race.date)}
-                            </span>
+                          <span className="shrink-0 text-xs text-neutral-500 tabular-nums">
+                            {race.season} · R{race.round}
                           </span>
-                        </button>
-                      </li>
-                    )
-                  })}
+                        </span>
+                        <span className="mt-1 flex items-baseline justify-between gap-3">
+                          <span className="text-xs text-neutral-500">
+                            {race.circuit_name}
+                          </span>
+                          <span className="shrink-0 text-xs text-neutral-600">
+                            {formatDate(race.date)}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
                 </ul>
               )}
 
-              <p className="mt-4 text-xs tracking-[0.2em] text-neutral-600 uppercase">
-                {selectedRace
-                  ? `Selected · ${selectedRace.race_name} ${selectedRace.season}`
-                  : 'Select a race to continue'}
-              </p>
+              {showRaces && (
+                <p className="mt-4 text-xs tracking-[0.2em] text-neutral-600 uppercase">
+                  Select a race to continue
+                </p>
+              )}
             </div>
           </div>
         </SceneFrame>

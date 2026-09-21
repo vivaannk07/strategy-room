@@ -1,4 +1,4 @@
-import { compoundById } from '../../lib/mockRaceData'
+import { compoundById } from '../../lib/raceData'
 
 /**
  * A strategy as a proportional bar: one segment per stint, sized by its lap count.

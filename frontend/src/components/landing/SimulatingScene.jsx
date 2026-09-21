@@ -1,14 +1,18 @@
-import { motion, useTransform } from 'framer-motion'
+import { useEffect } from 'react'
+import { motion, useReducedMotion, useTransform } from 'framer-motion'
 import SceneFrame from './SceneFrame'
-import { buildDegradationSeries, compoundById } from '../../lib/mockRaceData'
+import PickFirst from './PickFirst'
+import RequestError from './RequestError'
+import { isRetryable } from '../../lib/api'
+import {
+  GENERIC_DEGRADATION_PER_LAP,
+  MONTE_CARLO_RUNS,
+  buildDegradationSeries,
+  compoundById,
+  simulationErrorMessage,
+} from '../../lib/raceData'
 
-const MONTE_CARLO_RUNS = 500
 const MAX_TIRE_AGE = 28
-
-const SERIES = buildDegradationSeries(MAX_TIRE_AGE)
-const MAX_DELTA = Math.max(
-  ...SERIES.flatMap((series) => series.points.map((point) => point.delta)),
-)
 
 /**
  * The plot's own coordinate space. Its aspect ratio is the drawn one — the <svg> fills
@@ -18,15 +22,15 @@ const MAX_DELTA = Math.max(
  */
 const VIEW = { width: 480, height: 168, padX: 4, padTop: 10, padBottom: 10 }
 
-/** Degradation points → an SVG polyline, scaled into the viewBox above. */
-function toPath(points) {
+/** Degradation points → an SVG polyline, scaled into the viewBox between `min` and `max`. */
+function toPath(points, [min, max]) {
   const plotWidth = VIEW.width - VIEW.padX * 2
   const plotHeight = VIEW.height - VIEW.padTop - VIEW.padBottom
 
   return points
     .map((point, index) => {
       const x = VIEW.padX + (point.age / MAX_TIRE_AGE) * plotWidth
-      const y = VIEW.height - VIEW.padBottom - (point.delta / MAX_DELTA) * plotHeight
+      const y = VIEW.height - VIEW.padBottom - ((point.delta - min) / (max - min)) * plotHeight
       return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`
     })
     .join(' ')
@@ -43,13 +47,13 @@ function curveWindow(index) {
  * A component rather than a loop body so each curve owns its own hooks — the three
  * curves are staggered, and staggering inside a `map` would mean conditional hooks.
  */
-function DegradationCurve({ series, progress, index }) {
+function DegradationCurve({ series, bounds, progress, index }) {
   const { from, to } = curveWindow(index)
   const pathLength = useTransform(progress, [from, to], [0, 1], { clamp: true })
 
   return (
     <motion.path
-      d={toPath(series.points)}
+      d={toPath(series.points, bounds)}
       fill="none"
       stroke={series.compound.color}
       strokeWidth="2.5"
@@ -63,6 +67,7 @@ function DegradationCurve({ series, progress, index }) {
 function CurveKey({ series, progress, index }) {
   const { to } = curveWindow(index)
   const opacity = useTransform(progress, [to - 0.12, to], [0.15, 1], { clamp: true })
+  const end = series.points.at(-1).delta
 
   return (
     <motion.li
@@ -75,33 +80,67 @@ function CurveKey({ series, progress, index }) {
       />
       {series.compound.label}
       <span className="text-neutral-600">
-        +{series.points.at(-1).delta.toFixed(1)}s
+        {end >= 0 ? '+' : ''}
+        {end.toFixed(1)}s
       </span>
     </motion.li>
   )
 }
 
 /**
- * Scene 4 — the Monte Carlo build-up: the degradation curves the sim runs on, drawing
- * themselves in, and the run counter climbing to 500.
+ * Indeterminate progress: the API reports nothing until the run is done, so a bar that
+ * filled would be claiming progress nobody measured. A segment sweeps instead; with
+ * reduced motion it holds still and pulses its opacity.
+ */
+function RunningBar() {
+  const reduced = useReducedMotion()
+
+  return (
+    <div className="relative h-1 overflow-hidden rounded-full bg-neutral-800">
+      <motion.div
+        className="absolute inset-y-0 w-2/5 rounded-full bg-red-500"
+        initial={reduced ? { x: '75%', opacity: 0.4 } : { x: '-100%' }}
+        animate={reduced ? { opacity: [0.4, 1, 0.4] } : { x: '250%' }}
+        transition={{ duration: 1.4, ease: 'easeInOut', repeat: Infinity }}
+      />
+    </div>
+  )
+}
+
+/**
+ * Scene 4 — the Monte Carlo, run for real.
  *
- * Driven off the scene's scroll `progress`, the same way <ScrollStory> intends: the
- * animation is scrubbable, so it can't finish before the scene is on screen or replay
- * out of step with it. Nothing here computes anything — the real numbers come from
- * `POST /api/simulate` next pass.
+ * Coming on screen sends the current call to `POST /api/simulate` (via `onRequestRun`,
+ * which does nothing if this exact call already ran). The degradation curves keep their
+ * scroll-driven build-up while the request runs; they draw with the backend's generic
+ * rates until the result lands, then with the wear it measured for this race.
  *
  * @param {MotionValue<number>} progress  0→1 across this scene's slice of the story.
+ * @param {boolean} isActive  Whether this scene owns the screen.
  * @param {{lap: number, compound: string}} strategy  The call made in scene 3.
+ * @param {object} simulation  `useApiResource` state for the simulate request.
  */
-export default function SimulatingScene({ progress, strategy }) {
-  const runs = useTransform(progress, [0.15, 0.85], [0, MONTE_CARLO_RUNS], {
-    clamp: true,
-  })
-  const runsLabel = useTransform(runs, (value) =>
-    Math.max(1, Math.round(value)).toLocaleString(),
+export default function SimulatingScene({
+  progress,
+  isActive,
+  driver,
+  strategy,
+  simulation,
+  onRequestRun,
+}) {
+  useEffect(() => {
+    if (isActive) onRequestRun()
+  }, [isActive, onRequestRun])
+
+  const paceModel = simulation.status === 'ready' ? simulation.data.pace_model : null
+  const series = buildDegradationSeries(
+    paceModel?.degradation_per_lap ?? GENERIC_DEGRADATION_PER_LAP,
+    MAX_TIRE_AGE,
   )
-  const barScale = useTransform(progress, [0.15, 0.85], [0, 1], { clamp: true })
+  const deltas = series.flatMap((s) => s.points.map((point) => point.delta))
+  const bounds = [Math.min(0, ...deltas), Math.max(...deltas)]
   const compound = compoundById(strategy.compound)
+  const { status, error } = simulation
 
   return (
     <SceneFrame
@@ -109,86 +148,99 @@ export default function SimulatingScene({ progress, strategy }) {
       title="Simulating the race"
       subtitle="Five hundred runs, lap by lap, with the safety car rolling the dice each time."
     >
-      <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-left">
-          <p className="text-[0.65rem] tracking-[0.2em] text-neutral-500 uppercase">
-            Degradation model
-          </p>
-          <p className="flex items-center gap-1.5 text-xs text-neutral-400">
-            Your call
-            <span className={`h-1.5 w-1.5 rounded-full ${compound.dot}`} />
-            {compound.label} on lap {strategy.lap}
-          </p>
-        </div>
-
-        <svg
-          viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
-          role="img"
-          aria-label="Tyre degradation against tyre age, for the soft, medium and hard compounds."
-          className="mt-3 w-full"
-        >
-          {/* Baseline and gridlines, so the curves have something to climb away from. */}
-          {[0, 0.5, 1].map((fraction) => {
-            const y =
-              VIEW.height -
-              VIEW.padBottom -
-              fraction * (VIEW.height - VIEW.padTop - VIEW.padBottom)
-            return (
-              <line
-                key={fraction}
-                x1={VIEW.padX}
-                x2={VIEW.width - VIEW.padX}
-                y1={y}
-                y2={y}
-                stroke="#262626"
-                strokeWidth="1"
-                strokeDasharray={fraction === 0 ? undefined : '2 4'}
-              />
-            )
-          })}
-
-          {SERIES.map((series, index) => (
-            <DegradationCurve
-              key={series.compound.id}
-              series={series}
-              progress={progress}
-              index={index}
-            />
-          ))}
-        </svg>
-
-        <div className="mt-2 flex items-center justify-between text-[0.65rem] tracking-[0.12em] text-neutral-600 uppercase">
-          <span>Fresh</span>
-          <span>{MAX_TIRE_AGE} laps old</span>
-        </div>
-
-        <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1">
-          {SERIES.map((series, index) => (
-            <CurveKey
-              key={series.compound.id}
-              series={series}
-              progress={progress}
-              index={index}
-            />
-          ))}
-        </ul>
-
-        <div className="mt-5">
-          <div className="h-1 overflow-hidden rounded-full bg-neutral-800">
-            <motion.div
-              style={{ scaleX: barScale }}
-              className="h-full origin-left bg-red-500"
-            />
+      {!driver ? (
+        <PickFirst />
+      ) : (
+        <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-left">
+            <p className="text-[0.65rem] tracking-[0.2em] text-neutral-500 uppercase">
+              Degradation model
+            </p>
+            <p className="flex items-center gap-1.5 text-xs text-neutral-400">
+              Your call
+              <span className={`h-1.5 w-1.5 rounded-full ${compound.dot}`} />
+              {compound.label} on lap {strategy.lap}
+            </p>
           </div>
-          <p className="mt-3 flex items-baseline justify-center gap-2 text-xs tracking-[0.2em] text-neutral-500 uppercase">
-            Run
-            <motion.span className="text-base text-neutral-100 tabular-nums">
-              {runsLabel}
-            </motion.span>
-            of {MONTE_CARLO_RUNS}
+
+          <svg
+            viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
+            role="img"
+            aria-label="Tyre degradation against tyre age, for the soft, medium and hard compounds."
+            className="mt-3 w-full"
+          >
+            {/* Baseline and gridlines, so the curves have something to climb away from. */}
+            {[0, 0.5, 1].map((fraction) => {
+              const y =
+                VIEW.height -
+                VIEW.padBottom -
+                fraction * (VIEW.height - VIEW.padTop - VIEW.padBottom)
+              return (
+                <line
+                  key={fraction}
+                  x1={VIEW.padX}
+                  x2={VIEW.width - VIEW.padX}
+                  y1={y}
+                  y2={y}
+                  stroke="#262626"
+                  strokeWidth="1"
+                  strokeDasharray={fraction === 0 ? undefined : '2 4'}
+                />
+              )
+            })}
+
+            {series.map((s, index) => (
+              <DegradationCurve
+                key={s.compound.id}
+                series={s}
+                bounds={bounds}
+                progress={progress}
+                index={index}
+              />
+            ))}
+          </svg>
+
+          <div className="mt-2 flex items-center justify-between text-[0.65rem] tracking-[0.12em] text-neutral-600 uppercase">
+            <span>Fresh</span>
+            <span>{MAX_TIRE_AGE} laps old</span>
+          </div>
+
+          <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1">
+            {series.map((s, index) => (
+              <CurveKey key={s.compound.id} series={s} progress={progress} index={index} />
+            ))}
+          </ul>
+          <p className="mt-1 text-[0.7rem] text-neutral-600">
+            {paceModel
+              ? `Wear measured at ${paceModel.degradation_per_lap.toFixed(3)}s/lap for this race`
+              : 'Generic wear rates until the run comes back'}
           </p>
+
+          <div className="mt-5">
+            {status === 'error' ? (
+              <RequestError
+                className="py-2"
+                message={simulationErrorMessage(error)}
+                onRetry={isRetryable(error) ? simulation.retry : undefined}
+              />
+            ) : status === 'ready' ? (
+              <>
+                <div className="h-1 rounded-full bg-red-500" />
+                <p className="mt-3 text-xs tracking-[0.2em] text-neutral-500 uppercase">
+                  {MONTE_CARLO_RUNS.toLocaleString()} runs complete
+                </p>
+              </>
+            ) : (
+              <>
+                <RunningBar />
+                <p className="mt-3 text-xs tracking-[0.2em] text-neutral-500 uppercase">
+                  Running {MONTE_CARLO_RUNS.toLocaleString()} simulations…
+                </p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </SceneFrame>
   )
 }

@@ -19,7 +19,7 @@ from app.db import connect
 from app.ingest import ingest_race
 from app.jolpica import RaceNotFoundError
 from app.pace_model import MODEL_VERSION, RacePaceModel, StintFit, compute_pace_model
-from app.schemas import PitStop, RaceDetail, RaceDriver, RaceSummary
+from app.schemas import DriverLap, PitStop, RaceDetail, RaceDriver, RaceSummary
 
 __all__ = [
     "RaceNotFoundError",
@@ -28,6 +28,7 @@ __all__ = [
     "ensure_cached",
     "ensure_pace_model",
     "list_race_summaries",
+    "load_driver_laps",
     "load_pace_model",
     "load_race_baseline",
     "load_race_detail",
@@ -228,6 +229,47 @@ def load_race_detail(conn: psycopg.Connection, season: int, round_: int) -> Race
         total_laps=total_laps,
         drivers=drivers,
     )
+
+
+# ---------------------------------------------------------------------------
+# GET /api/races/{season}/{round}/drivers/{driver_id}/laps
+# ---------------------------------------------------------------------------
+
+
+def load_driver_laps(
+    conn: psycopg.Connection, season: int, round_: int, driver_id: str
+) -> list[DriverLap] | None:
+    """One driver's recorded laps, in order. None if the driver has no result in this race.
+
+    A driver who took part but has no lap rows (older seasons have no timing data)
+    comes back as an empty list, not None - they did race, there's just nothing to plot.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT 1 FROM race_results
+            WHERE race_season = %s AND race_round = %s AND driver_id = %s
+            """,
+            (season, round_, driver_id),
+        )
+        if cur.fetchone() is None:
+            return None
+
+        cur.execute(
+            """
+            SELECT lap_number, position, lap_time_seconds
+            FROM laps
+            WHERE race_season = %s AND race_round = %s AND driver_id = %s
+            ORDER BY lap_number
+            """,
+            (season, round_, driver_id),
+        )
+        rows = cur.fetchall()
+
+    return [
+        DriverLap(lap=lap_number, position=position, lap_time_seconds=_f(seconds))
+        for lap_number, position, seconds in rows
+    ]
 
 
 # ---------------------------------------------------------------------------

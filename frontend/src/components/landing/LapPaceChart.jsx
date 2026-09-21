@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { compoundById, formatLapTime } from '../../lib/mockRaceData'
+import { formatLapTime } from '../../lib/raceData'
 
 /** Lap ticks that stay readable at 390px: every tenth lap, plus the last one. */
 function lapTicks(laps) {
@@ -19,10 +19,24 @@ function lapTicks(laps) {
   return ticks
 }
 
-/** Whole-second bounds around the data, so the axis lands on round lap times. */
+/**
+ * Whole-second bounds around the racing laps.
+ *
+ * The top is taken from the 90th percentile rather than the slowest lap: recorded timing
+ * includes lap 1 and safety-car laps, several seconds off the pace, and scaling to those
+ * would flatten the stints the chart exists to show. Laps above the bound run off the
+ * top of the plot (`allowDataOverflow`).
+ */
 function paceDomain(laps) {
-  const paces = laps.map((lap) => lap.pace_seconds)
-  return [Math.floor(Math.min(...paces) - 0.4), Math.ceil(Math.max(...paces) + 0.4)]
+  const paces = laps
+    .map((lap) => lap.pace_seconds)
+    .filter((pace) => pace != null)
+    .sort((a, b) => a - b)
+  if (paces.length === 0) return [0, 1]
+
+  const p90 = paces[Math.floor((paces.length - 1) * 0.9)]
+  const top = Math.min(paces.at(-1), p90 + 1.5)
+  return [Math.floor(paces[0] - 0.4), Math.ceil(top + 0.4)]
 }
 
 /** Four or five evenly spaced whole seconds — `1:24.0` reads, `1:24.3` doesn't. */
@@ -37,55 +51,39 @@ function PaceTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
 
   const row = payload[0].payload
-  // Absent on the actual side and on any opening stint — tyre age is knowable from the
-  // stop laps, the compound that produced it isn't.
-  const compound = row.compound ? compoundById(row.compound) : null
-  const age = `${row.tire_age} lap${row.tire_age === 1 ? '' : 's'} old`
+  // Tyre age is knowable from the stop laps; the compound that produced it isn't.
+  const age = `${row.tire_age} lap${row.tire_age === 1 ? '' : 's'} on this set`
 
   return (
     <div className="rounded-lg border border-neutral-700 bg-neutral-950/95 px-3 py-2 text-left">
       <p className="text-xs font-medium text-neutral-100">Lap {row.lap}</p>
-      <p className="mt-0.5 text-sm text-neutral-200 tabular-nums">
-        {formatLapTime(row.pace_seconds, 3)}
-      </p>
-      <p className="mt-1 flex items-center gap-1.5 text-[0.7rem] text-neutral-500">
-        {compound && (
-          <span className={`h-1.5 w-1.5 rounded-full ${compound.dot}`} />
-        )}
-        {compound ? `${compound.label} · ${age}` : age}
-      </p>
+      {row.lap_time_seconds != null && (
+        <p className="mt-0.5 text-sm text-neutral-200 tabular-nums">
+          {formatLapTime(row.lap_time_seconds, 3)}
+        </p>
+      )}
+      <p className="mt-1 text-[0.7rem] text-neutral-500">{age}</p>
       {row.is_pit_lap && (
-        <p className="mt-1 text-[0.7rem] text-red-400">Pitted — pit-lane loss excluded</p>
+        <p className="mt-1 text-[0.7rem] text-red-400">Pit lap — left off the line</p>
       )}
     </div>
   )
 }
 
 /**
- * Lap pace over a race, with the pit stops marked on the lap axis.
+ * Recorded lap times over a race, with the real pit stops marked on the lap axis.
  *
- * Plots `pace_seconds`, not `lap_time_seconds`: a pit lap carries ~21s of pit-lane loss,
- * and including it would compress every other lap in the race into a flat line. The
- * stops are shown as markers instead, which is also how a timing screen reads.
+ * Plots `pace_seconds`, which is null on each stop's in-lap and out-lap: the pit-lane
+ * loss would compress every other lap into a flat line. The line bridges those laps and
+ * the stops are drawn as markers instead, which is also how a timing screen reads.
  *
- * @param {string} id            Unique per chart instance — scopes the fill gradient.
- * @param {Array} laps           Rows from `buildLapTimes`.
- * @param {Array} strategy       Stops to mark, `[{ lap, duration_seconds, compound? }]`.
- *                               `compound` is present only on user-chosen stops.
- * @param {[number, number]} domain  Shared y-axis bounds, so two charts compare honestly.
- * @param {'full'|'short'} stopLabels  `full` adds the compound name to the marker.
+ * @param {string} id       Unique per chart instance — scopes the fill gradient.
+ * @param {Array} laps      Rows from `buildPaceSeries`.
+ * @param {Array} stops     Actual stops, `[{ lap, duration_seconds }]` — no compound.
  */
-export default function LapPaceChart({
-  id,
-  laps,
-  strategy,
-  accent = '#ef4444',
-  domain,
-  stopLabels = 'full',
-  ariaLabel,
-}) {
+export default function LapPaceChart({ id, laps, stops, accent = '#ef4444', ariaLabel }) {
   const gradientId = `pace-fill-${id}`
-  const yDomain = domain ?? paceDomain(laps)
+  const yDomain = paceDomain(laps)
 
   return (
     <div className="h-full w-full" role="img" aria-label={ariaLabel}>
@@ -101,6 +99,8 @@ export default function LapPaceChart({
           <CartesianGrid stroke="#262626" strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="lap"
+            type="number"
+            domain={['dataMin', 'dataMax']}
             ticks={lapTicks(laps)}
             tick={{ fill: '#737373', fontSize: 10 }}
             tickLine={false}
@@ -109,6 +109,7 @@ export default function LapPaceChart({
           />
           <YAxis
             domain={yDomain}
+            allowDataOverflow
             ticks={paceTicks(yDomain)}
             tickFormatter={(value) => formatLapTime(value)}
             tick={{ fill: '#737373', fontSize: 10 }}
@@ -121,36 +122,26 @@ export default function LapPaceChart({
             cursor={{ stroke: '#525252', strokeDasharray: '3 3' }}
           />
 
-          {strategy.map((stop) => {
-            // A stop the user chose carries a compound and is marked in its colour. An
-            // actual stop carries none — it gets a neutral marker labelled with the one
-            // other thing the data does give us, the pit-lane time.
-            const compound = stop.compound ? compoundById(stop.compound) : null
-            const color = compound ? compound.color : '#a3a3a3'
-            // Compound is set in caps to match the scene's other labels; a duration
-            // reads as a number, so it keeps its lowercase unit.
-            const detail = compound
-              ? compound.label.toUpperCase()
-              : `${stop.duration_seconds.toFixed(1)}s`
-
-            return (
-              <ReferenceLine
-                key={stop.lap}
-                x={stop.lap}
-                stroke={color}
-                strokeOpacity={0.75}
-                strokeDasharray="4 3"
-                label={{
-                  value:
-                    stopLabels === 'full' ? `L${stop.lap} · ${detail}` : `L${stop.lap}`,
-                  position: 'top',
-                  fill: color,
-                  fontSize: 10,
-                  letterSpacing: '0.08em',
-                }}
-              />
-            )
-          })}
+          {/*
+            An actual stop carries no compound, so it gets a neutral marker labelled with
+            the one other thing the data does give us: the pit-lane time.
+          */}
+          {stops.map((stop) => (
+            <ReferenceLine
+              key={stop.stop}
+              x={stop.lap}
+              stroke="#a3a3a3"
+              strokeOpacity={0.75}
+              strokeDasharray="4 3"
+              label={{
+                value: `L${stop.lap} · ${stop.duration_seconds.toFixed(1)}s`,
+                position: 'top',
+                fill: '#a3a3a3',
+                fontSize: 10,
+                letterSpacing: '0.08em',
+              }}
+            />
+          ))}
 
           {/*
             Animation off: every scene is mounted from the start at opacity 0, so a
@@ -159,6 +150,7 @@ export default function LapPaceChart({
           <Area
             type="monotone"
             dataKey="pace_seconds"
+            connectNulls
             stroke={accent}
             strokeWidth={2}
             fill={`url(#${gradientId})`}

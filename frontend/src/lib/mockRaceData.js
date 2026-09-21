@@ -1,12 +1,14 @@
 /**
- * Mock race data for the landing story (scenes 2–5).
+ * Mock race data for the offline landing story, served when the URL has `?mock=true`.
  *
- * Scenes 2–5 read everything from this file, so wiring the real API in next pass is a
- * single-file change: `MOCK_RACE` / `ACTUAL_STRATEGY` / `ACTUAL_LAPS` stand in for
- * `GET /api/races/{season}/{round}`, and `HYPOTHETICAL_LAPS` / `RESULT_DELTA` stand in
- * for `POST /api/simulate`. Nothing here touches the network.
+ * Only the mock flow reads this — `src/pages/MockLandingPage.jsx` and the scenes in
+ * `src/components/landing/mock/`, which are the landing story as it was before the
+ * real-backend wiring. The default flow never imports it. `MOCK_RACES` stands in for
+ * `GET /api/races`, `MOCK_RACE` / `ACTUAL_STRATEGY` / `ACTUAL_LAPS` for
+ * `GET /api/races/{season}/{round}`, and `HYPOTHETICAL_LAPS` / `RESULT_DELTA` for
+ * `POST /api/simulate`. Nothing here touches the network.
  *
- * Two things to carry into that swap:
+ * Two things that hold for this data as much as the real thing:
  *
  * 1. Jolpica publishes no tire data, so nothing on the *actual* side carries a compound —
  *    not the stops, not the stints, not the opening tyre. `api-contract.md` and
@@ -16,8 +18,8 @@
  *    strategy. The toy model still needs a compound per stint to produce plausible lap
  *    times; that lives in `paceCompound`, which never reaches the UI — see `buildStints`.
  * 2. Lap times here come from the toy model below (fuel burn-off + linear tire
- *    degradation + a deterministic wobble), not from recorded timing. Real lap times
- *    arrive as `lap_time` ("mm:ss.SSS") on the race detail response.
+ *    degradation + a deterministic wobble), not from recorded timing. The real flow gets
+ *    recorded lap times from `GET /api/races/{season}/{round}/drivers/{driver_id}/laps`.
  */
 
 /* ------------------------------------------------------------------ *
@@ -97,6 +99,18 @@ export const MOCK_RACE = {
   constructor_name: 'Ferrari',
   actual_finish_position: 1,
 }
+
+/** Scene 1's race list: the one mock race, in the shape `GET /api/races` returns. */
+export const MOCK_RACES = [
+  {
+    season: MOCK_RACE.season,
+    round: MOCK_RACE.round,
+    race_name: MOCK_RACE.race_name,
+    circuit_id: 'monza',
+    circuit_name: MOCK_RACE.circuit_name,
+    date: '2024-09-01',
+  },
+]
 
 /**
  * The stops as they actually happened — lap and total pit-lane loss, nothing else.

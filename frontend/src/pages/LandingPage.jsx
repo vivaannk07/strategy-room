@@ -5,20 +5,43 @@ import ChangeStrategyScene from '../components/landing/ChangeStrategyScene'
 import PickRaceScene from '../components/landing/PickRaceScene'
 import ResultScene from '../components/landing/ResultScene'
 import SimulatingScene from '../components/landing/SimulatingScene'
+import { fetchDriverLaps, fetchRaceDetail, runSimulation } from '../lib/api'
 import {
-  ACTUAL_STRATEGY,
   DEFAULT_HYPOTHETICAL_COMPOUND,
-  MOCK_RACE,
-} from '../lib/mockRaceData'
+  MONTE_CARLO_RUNS,
+  buildHypotheticalStrategy,
+  initialPitLap,
+} from '../lib/raceData'
+import { useApiResource } from '../lib/useApiResource'
+
+// Loaders for `useApiResource`. Module scope so they're stable; everything that varies
+// travels in the params object.
+const loadRaceDetail = ({ season, round }, signal) =>
+  fetchRaceDetail({ season, round, signal })
+const loadDriverLaps = ({ season, round, driverId }, signal) =>
+  fetchDriverLaps({ season, round, driverId, signal })
+const loadSimulation = (request, signal) => runSimulation({ ...request, signal })
 
 /**
  * The five beats of the landing story, in order.
  *
- * Built inside the component because scene content now depends on the selected race.
- * Scene identity comes from `id`, not array identity, so rebuilding this list on each
- * render re-renders the scenes without disturbing their scroll transforms.
+ * Built inside the component because scene content depends on the selections and
+ * requests. Scene identity comes from `id`, not array identity, so rebuilding this list
+ * on each render re-renders the scenes without disturbing their scroll transforms.
  */
-function buildScenes({ selectedRace, onSelectRace, pitStrategy, onChangeStrategy }) {
+function buildScenes({
+  selectedRace,
+  onSelectRace,
+  raceDetail,
+  race,
+  driver,
+  onSelectDriver,
+  driverLaps,
+  pitCall,
+  onChangePitCall,
+  simulation,
+  onRequestSimulation,
+}) {
   return [
     {
       id: 'pick-race',
@@ -27,65 +50,137 @@ function buildScenes({ selectedRace, onSelectRace, pitStrategy, onChangeStrategy
         <PickRaceScene
           selectedRace={selectedRace}
           onSelectRace={onSelectRace}
+          raceDetail={raceDetail}
+          selectedDriverId={driver?.driver_id ?? null}
+          onSelectDriver={onSelectDriver}
         />
       ),
     },
     {
       id: 'actual-strategy',
       label: "Driver's actual strategy",
-      // Next pass: this scene loads the selected race's real stints, so it takes
-      // `selectedRace` from here. Until then it reads `src/lib/mockRaceData.js`.
-      content: <ActualStrategyScene />,
+      content: <ActualStrategyScene race={race} driver={driver} laps={driverLaps} />,
     },
     {
       id: 'change-strategy',
       label: 'Change the pit strategy',
       content: (
         <ChangeStrategyScene
-          strategy={pitStrategy}
-          onChange={onChangeStrategy}
+          race={race}
+          driver={driver}
+          strategy={pitCall}
+          onChange={onChangePitCall}
         />
       ),
     },
     {
       id: 'simulating',
       label: 'Simulating',
-      content: ({ progress }) => (
-        <SimulatingScene progress={progress} strategy={pitStrategy} />
+      content: ({ progress, isActive }) => (
+        <SimulatingScene
+          progress={progress}
+          isActive={isActive}
+          driver={driver}
+          strategy={pitCall}
+          simulation={simulation}
+          onRequestRun={onRequestSimulation}
+        />
       ),
     },
     {
       id: 'result',
       label: 'Result: hypothetical vs actual',
-      content: <ResultScene />,
+      content: ({ isActive }) => (
+        <ResultScene
+          isActive={isActive}
+          race={race}
+          driver={driver}
+          strategy={pitCall}
+          simulation={simulation}
+          onRequestRun={onRequestSimulation}
+        />
+      ),
     },
   ]
 }
 
 export default function LandingPage() {
-  // The picked race is owned here, not in scene 1 — scenes 2 onward read the same
-  // selection.
+  // Both selections are owned here, not in scene 1 — scenes 2 onward read them.
   const [selectedRace, setSelectedRace] = useState(null)
+  const [selectedDriverId, setSelectedDriverId] = useState(null)
 
-  // The hypothetical call, owned here for the same reason: scene 3 edits it and scene 4
-  // reads it back. The lap starts on the stop the driver actually made, so the user is
-  // moving a real decision rather than filling in a blank. The compound can't come from
-  // there — no data source publishes what the car actually fitted — so it starts on the
-  // picker's own default. A race run without a stop has no real decision to start from,
-  // so the lap starts mid-race instead. Next pass this becomes the `strategy` body of
-  // `POST /api/simulate`.
-  const [pitStrategy, setPitStrategy] = useState({
-    lap: ACTUAL_STRATEGY[0]?.lap ?? Math.round(MOCK_RACE.total_laps / 2),
-    compound: DEFAULT_HYPOTHETICAL_COMPOUND,
-  })
-  const changeStrategy = (patch) =>
-    setPitStrategy((current) => ({ ...current, ...patch }))
+  // The race detail carries the driver list (scene 1), the actual stops (scene 2) and the
+  // race length (scene 3), so it's fetched once, here.
+  const raceDetail = useApiResource(
+    selectedRace && { season: selectedRace.season, round: selectedRace.round },
+    loadRaceDetail,
+  )
+  const race = raceDetail.status === 'ready' ? raceDetail.data : null
+  const driver = race?.drivers.find((d) => d.driver_id === selectedDriverId) ?? null
+
+  const driverLaps = useApiResource(
+    race && driver && { season: race.season, round: race.round, driverId: driver.driver_id },
+    loadDriverLaps,
+  )
+
+  // The hypothetical call: scene 3 edits it, scenes 4 and 5 send and read it back. The
+  // lap is reset whenever a driver is picked (see `selectDriver`); the compound can't
+  // come from the race — no data source publishes what the car fitted — so it starts on
+  // the picker's own default.
+  const [pitCall, setPitCall] = useState({ lap: 1, compound: DEFAULT_HYPOTHETICAL_COMPOUND })
+  const changePitCall = (patch) => setPitCall((current) => ({ ...current, ...patch }))
+
+  // The simulate request is only sent when scene 4 or 5 comes on screen, not on every
+  // slider tick in scene 3 — so the request in flight (or settled) can lag the current
+  // call. It only counts as this call's result while the two still match.
+  const [requestedSimulation, setRequestedSimulation] = useState(null)
+  const currentSimulation =
+    race && driver
+      ? {
+          season: race.season,
+          round: race.round,
+          driverId: driver.driver_id,
+          strategy: buildHypotheticalStrategy(driver, pitCall),
+          numSimulations: MONTE_CARLO_RUNS,
+        }
+      : null
+  const simulationResource = useApiResource(requestedSimulation, loadSimulation)
+  const isSimulationCurrent =
+    currentSimulation != null &&
+    JSON.stringify(requestedSimulation) === JSON.stringify(currentSimulation)
+  const simulation = isSimulationCurrent
+    ? simulationResource
+    : { ...simulationResource, status: 'idle', data: null, error: null }
+
+  // Idempotent, so scenes can call it from an effect whenever they're on screen.
+  const requestSimulation = () => {
+    if (currentSimulation && !isSimulationCurrent) setRequestedSimulation(currentSimulation)
+  }
+
+  const selectRace = (nextRace) => {
+    setSelectedRace(nextRace)
+    setSelectedDriverId(null)
+  }
+
+  const selectDriver = (driverId) => {
+    const picked = race?.drivers.find((d) => d.driver_id === driverId)
+    if (!picked) return
+    setSelectedDriverId(driverId)
+    changePitCall({ lap: initialPitLap(picked, race.total_laps) })
+  }
 
   const scenes = buildScenes({
     selectedRace,
-    onSelectRace: setSelectedRace,
-    pitStrategy,
-    onChangeStrategy: changeStrategy,
+    onSelectRace: selectRace,
+    raceDetail,
+    race,
+    driver,
+    onSelectDriver: selectDriver,
+    driverLaps,
+    pitCall,
+    onChangePitCall: changePitCall,
+    simulation,
+    onRequestSimulation: requestSimulation,
   })
 
   return (

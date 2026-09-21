@@ -134,6 +134,35 @@ we translate that to a 404).
 
 ---
 
+## GET /api/races/{season}/{round}/drivers/{driver_id}/laps
+One driver's recorded laps for a race, in lap order. The actual-strategy view plots these;
+race detail doesn't carry them because it would be every driver's laps at once (~1000 rows).
+
+**Path params**
+| Param | Type | Description |
+|---|---|---|
+| season | integer | Season year, e.g. `2024` |
+| round | integer | Round within the season, e.g. `16` |
+| driver_id | string | e.g. `leclerc` |
+
+**Response 200**
+```json
+[
+  { "lap": 1, "position": 3, "lap_time_seconds": 91.482 },
+  { "lap": 2, "position": 3, "lap_time_seconds": 87.107 }
+]
+```
+
+- Straight from the `laps` cache. `lap_time_seconds` is the whole lap as timed, so pit
+  in/out laps, lap 1 and safety-car laps are all in there unfiltered.
+- `position` and `lap_time_seconds` are nullable.
+- A driver who took part but has no timing data (older seasons) returns `[]`, not 404.
+- Fetches and caches the race from Jolpica first if it isn't cached, same as race detail.
+
+**Response 404** — season/round not found upstream, or the driver didn't take part.
+
+---
+
 ## POST /api/simulate
 Runs the Monte Carlo simulation for a hypothetical strategy against a race's baseline.
 
