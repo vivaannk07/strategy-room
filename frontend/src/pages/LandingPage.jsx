@@ -185,7 +185,7 @@ export default function LandingPage() {
 
   return (
     <main className="bg-neutral-950 text-neutral-100">
-      <section className="flex h-stage flex-col items-center justify-center px-6 text-center">
+      <section className="safe-px safe-py flex h-stage flex-col items-center justify-center [--pad-x:1.5rem] [--pad-y:2.5rem] text-center">
         <p className="text-[0.7rem] font-medium tracking-[0.3em] text-red-500 uppercase">
           Strategy Room
         </p>
@@ -195,15 +195,15 @@ export default function LandingPage() {
         <p className="mt-5 max-w-md text-sm text-pretty text-neutral-400 sm:text-base">
           Take a real Grand Prix, move the stop, and watch the race run again.
         </p>
-        <p className="mt-14 text-[0.65rem] tracking-[0.3em] text-neutral-600 uppercase">
+        <p className="mt-14 text-[0.65rem] tracking-[0.3em] text-neutral-400 uppercase">
           Scroll
         </p>
       </section>
 
       <ScrollStory id="story" scenes={scenes} />
 
-      <section className="flex h-[60vh] items-center justify-center px-6">
-        <p className="text-sm text-neutral-500">End of story placeholder</p>
+      <section className="safe-px flex h-[60svh] items-center justify-center [--pad-x:1.5rem] pb-[env(safe-area-inset-bottom)]">
+        <p className="text-sm text-neutral-400">End of story placeholder</p>
       </section>
     </main>
   )

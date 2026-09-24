@@ -5,7 +5,7 @@
 export default function PickFirst({ children = 'Pick a race and a driver in scene 1 first.' }) {
   return (
     <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
-      <p className="py-8 text-sm text-neutral-500">{children}</p>
+      <p className="py-8 text-sm text-neutral-400">{children}</p>
     </div>
   )
 }

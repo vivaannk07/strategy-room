@@ -6,3 +6,43 @@
   height: 100vh;
   height: 100svh;
 }
+
+/* The scroll spacer <ScrollStory> pins its stage inside. Driven by `--story-h`
+   (a unitless scene-count × per-scene viewport height) and in the same `svh`
+   units as the stage above.
+
+   Progress is normalised over `spacer height - viewport height`, so the
+   spacer's unit drops out of the mapping entirely; what it changes is only how
+   much scroll the story costs. (The mapping is exact only while `100svh` equals
+   the live viewport height — when mobile chrome hides, progress finishes ~60px
+   before the stage unpins, regardless of which unit the spacer uses.) */
+@utility h-story {
+  height: calc(var(--story-h) * 1vh);
+  height: calc(var(--story-h) * 1svh);
+}
+
+/*
+ * Safe-area-aware padding. The base inset comes from `--pad-x` / `--pad-y` so
+ * the size stays a Tailwind concern — `safe-px [--pad-x:1.5rem] sm:[--pad-x:2.5rem]`
+ * — while the notch and home-indicator insets are added here and apply at every
+ * breakpoint, including a landscape phone wide enough to hit `sm`.
+ */
+@utility safe-px {
+  padding-left: calc(var(--pad-x, 0px) + env(safe-area-inset-left));
+  padding-right: calc(var(--pad-x, 0px) + env(safe-area-inset-right));
+}
+
+@utility safe-py {
+  padding-top: calc(var(--pad-y, 0px) + env(safe-area-inset-top));
+  padding-bottom: calc(var(--pad-y, 0px) + env(safe-area-inset-bottom));
+}
+
+/*
+ * Minimum comfortable touch target. Applied to controls whose own type size
+ * would otherwise leave them under 44px — the text stays the size the design
+ * wants and the hit area grows around it.
+ */
+@utility tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}

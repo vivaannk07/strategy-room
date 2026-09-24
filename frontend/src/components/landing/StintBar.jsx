@@ -37,7 +37,7 @@ export default function StintBar({ stints, showLabels = true, rowLabel }) {
                 <p className="mt-2 truncate text-left text-[0.65rem] tracking-wider text-neutral-400 uppercase">
                   {compound ? compound.label : lapRange}
                 </p>
-                <p className="truncate text-left text-[0.65rem] text-neutral-600 tabular-nums">
+                <p className="truncate text-left text-[0.65rem] text-neutral-400 tabular-nums">
                   {compound
                     ? lapRange
                     : stint.pitsAfter
@@ -56,7 +56,7 @@ export default function StintBar({ stints, showLabels = true, rowLabel }) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="w-20 shrink-0 text-left text-[0.65rem] tracking-wider text-neutral-500 uppercase">
+      <span className="w-20 shrink-0 text-left text-[0.65rem] tracking-wider text-neutral-400 uppercase">
         {rowLabel}
       </span>
       {bar}

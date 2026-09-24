@@ -10,6 +10,10 @@ import {
 } from 'recharts'
 import { formatLapTime } from '../../lib/raceData'
 
+// Axis labels are 10px text, which needs the full 4.5:1 against the panel —
+// neutral-400, the same floor the surrounding HTML labels use.
+const AXIS_TEXT = '#a3a3a3'
+
 /** Lap ticks that stay readable at 390px: every tenth lap, plus the last one. */
 function lapTicks(laps) {
   const last = laps.at(-1)?.lap ?? 0
@@ -62,7 +66,7 @@ function PaceTooltip({ active, payload }) {
           {formatLapTime(row.lap_time_seconds, 3)}
         </p>
       )}
-      <p className="mt-1 text-[0.7rem] text-neutral-500">{age}</p>
+      <p className="mt-1 text-[0.7rem] text-neutral-400">{age}</p>
       {row.is_pit_lap && (
         <p className="mt-1 text-[0.7rem] text-red-400">Pit lap — left off the line</p>
       )}
@@ -102,7 +106,7 @@ export default function LapPaceChart({ id, laps, stops, accent = '#ef4444', aria
             type="number"
             domain={['dataMin', 'dataMax']}
             ticks={lapTicks(laps)}
-            tick={{ fill: '#737373', fontSize: 10 }}
+            tick={{ fill: AXIS_TEXT, fontSize: 10 }}
             tickLine={false}
             axisLine={{ stroke: '#262626' }}
             interval="preserveStartEnd"
@@ -112,7 +116,7 @@ export default function LapPaceChart({ id, laps, stops, accent = '#ef4444', aria
             allowDataOverflow
             ticks={paceTicks(yDomain)}
             tickFormatter={(value) => formatLapTime(value)}
-            tick={{ fill: '#737373', fontSize: 10 }}
+            tick={{ fill: AXIS_TEXT, fontSize: 10 }}
             tickLine={false}
             axisLine={false}
             width={48}

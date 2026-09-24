@@ -98,22 +98,25 @@ export default function ChangeStrategyScene({ strategy, onChange }) {
             value={strategy.lap}
             onChange={(event) => onChange({ lap: Number(event.target.value) })}
             aria-label="Lap to pit on"
-            // The filled half of the track is painted as a gradient: a native range
-            // input gives no hook for "progress so far" that works in every engine.
+            // The filled half of the track is painted as a background image rather
+            // than a background colour: a native range input gives no hook for
+            // "progress so far" that works in every engine, and the input itself is
+            // 44px tall (a thumb-sized hit strip for a finger) with the visible 10px
+            // track drawn centred inside it via `background-size`/`position`.
             style={{
-              background: `linear-gradient(to right, #ef4444 ${percentOf(
+              backgroundImage: `linear-gradient(to right, #ef4444 ${percentOf(
                 strategy.lap,
                 maxPitLap,
               )}%, #262626 ${percentOf(strategy.lap, maxPitLap)}%)`,
             }}
-            className="h-2.5 w-full cursor-pointer appearance-none rounded-full outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-4 focus-visible:ring-offset-neutral-950 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-red-500 [&::-moz-range-thumb]:bg-neutral-950 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-red-500 [&::-webkit-slider-thumb]:bg-neutral-950 [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(239,68,68,0.18)]"
+            className="h-11 w-full cursor-pointer appearance-none bg-[length:100%_10px] bg-center bg-no-repeat [background-clip:content-box] outline-none [border-radius:9999px] focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-red-500 [&::-moz-range-thumb]:bg-neutral-950 [&::-moz-range-track]:h-2.5 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-transparent [&::-webkit-slider-runnable-track]:h-2.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-red-500 [&::-webkit-slider-thumb]:bg-neutral-950"
           />
 
           <div className="relative mt-2 h-8">
-            <span className="absolute left-0 text-[0.65rem] text-neutral-600 tabular-nums">
+            <span className="absolute left-0 text-[0.65rem] text-neutral-400 tabular-nums">
               Lap {MIN_PIT_LAP}
             </span>
-            <span className="absolute right-0 text-[0.65rem] text-neutral-600 tabular-nums">
+            <span className="absolute right-0 text-[0.65rem] text-neutral-400 tabular-nums">
               Lap {maxPitLap}
             </span>
             {/* Where the real stop came, so the user can see what they moved away from. */}
@@ -138,7 +141,7 @@ export default function ChangeStrategyScene({ strategy, onChange }) {
               const isSelected = option.id === strategy.compound
 
               return (
-                <label key={option.id} className="cursor-pointer">
+                <label key={option.id} className="tap-target flex cursor-pointer items-center">
                   <input
                     type="radio"
                     name="compound"
@@ -148,10 +151,10 @@ export default function ChangeStrategyScene({ strategy, onChange }) {
                     className="peer sr-only"
                   />
                   <span
-                    className={`block rounded-full border px-4 py-1.5 text-xs tracking-wider uppercase transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-red-500/60 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-neutral-950 ${
+                    className={`block w-full rounded-full border px-4 py-2 text-xs tracking-wider uppercase transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-red-500/60 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-neutral-950 ${
                       isSelected
                         ? option.chip
-                        : 'border-neutral-700 text-neutral-500 hover:border-neutral-500 hover:text-neutral-300'
+                        : 'border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-200 active:border-neutral-500 active:text-neutral-200'
                     }`}
                   >
                     {option.label}

@@ -96,7 +96,7 @@ export default function MockLandingPage() {
 
   return (
     <main className="bg-neutral-950 text-neutral-100">
-      <section className="flex h-stage flex-col items-center justify-center px-6 text-center">
+      <section className="safe-px safe-py flex h-stage flex-col items-center justify-center [--pad-x:1.5rem] [--pad-y:2.5rem] text-center">
         <p className="text-[0.7rem] font-medium tracking-[0.3em] text-red-500 uppercase">
           Strategy Room
         </p>
@@ -113,7 +113,7 @@ export default function MockLandingPage() {
 
       <ScrollStory id="story" scenes={scenes} />
 
-      <section className="flex h-[60vh] items-center justify-center px-6">
+      <section className="safe-px flex h-[60svh] items-center justify-center [--pad-x:1.5rem] pb-[env(safe-area-inset-bottom)]">
         <p className="text-sm text-neutral-500">End of story placeholder</p>
       </section>
     </main>

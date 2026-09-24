@@ -50,9 +50,9 @@ export default function ActualStrategyScene({ race, driver, laps }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-left">
         <p className="text-sm font-medium text-neutral-100">
           {driver.driver_name}
-          <span className="ml-2 text-xs text-neutral-500">{driver.constructor_name}</span>
+          <span className="ml-2 text-xs text-neutral-400">{driver.constructor_name}</span>
         </p>
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-neutral-400">
           {race.race_name} {race.season} · {race.total_laps} laps
         </p>
       </div>
@@ -63,7 +63,7 @@ export default function ActualStrategyScene({ race, driver, laps }) {
 
       <div className="mt-6 h-44 w-full sm:h-56">
         {laps.status === 'loading' && (
-          <p className="py-8 text-sm text-neutral-500">Loading lap times…</p>
+          <p className="py-8 text-sm text-neutral-400">Loading lap times…</p>
         )}
 
         {laps.status === 'error' && (
@@ -74,7 +74,7 @@ export default function ActualStrategyScene({ race, driver, laps }) {
         )}
 
         {laps.status === 'ready' && lapRows.length === 0 && (
-          <p className="py-8 text-sm text-neutral-500">
+          <p className="py-8 text-sm text-neutral-400">
             No lap timing is recorded for {driver.driver_name} in this race.
           </p>
         )}
@@ -103,35 +103,35 @@ export default function ActualStrategyScene({ race, driver, laps }) {
         */}
         {stops.map((stop) => (
           <div key={stop.stop}>
-            <dt className="text-[0.65rem] tracking-wider text-neutral-500 uppercase">
+            <dt className="text-[0.65rem] tracking-wider text-neutral-400 uppercase">
               Stop {stop.stop}
             </dt>
             <dd className="mt-1 text-sm text-neutral-100 tabular-nums">Lap {stop.lap}</dd>
-            <dd className="mt-0.5 text-xs text-neutral-500 tabular-nums">
+            <dd className="mt-0.5 text-xs text-neutral-400 tabular-nums">
               {stop.duration_seconds.toFixed(1)}s in the pit lane
             </dd>
           </div>
         ))}
         {stops.length === 0 && (
           <div>
-            <dt className="text-[0.65rem] tracking-wider text-neutral-500 uppercase">
+            <dt className="text-[0.65rem] tracking-wider text-neutral-400 uppercase">
               Pit stops
             </dt>
             <dd className="mt-1 text-sm text-neutral-100">None</dd>
-            <dd className="mt-0.5 text-xs text-neutral-500">
+            <dd className="mt-0.5 text-xs text-neutral-400">
               {driver.actual_status || 'Ran the race without stopping'}
             </dd>
           </div>
         )}
         {fastest && (
           <div>
-            <dt className="text-[0.65rem] tracking-wider text-neutral-500 uppercase">
+            <dt className="text-[0.65rem] tracking-wider text-neutral-400 uppercase">
               Fastest lap
             </dt>
             <dd className="mt-1 text-sm text-neutral-100 tabular-nums">
               {formatLapTime(fastest.lap_time_seconds, 3)}
             </dd>
-            <dd className="mt-0.5 text-xs text-neutral-500">Lap {fastest.lap}</dd>
+            <dd className="mt-0.5 text-xs text-neutral-400">Lap {fastest.lap}</dd>
           </div>
         )}
       </dl>

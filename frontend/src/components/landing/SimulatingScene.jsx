@@ -46,10 +46,14 @@ function curveWindow(index) {
  *
  * A component rather than a loop body so each curve owns its own hooks — the three
  * curves are staggered, and staggering inside a `map` would mean conditional hooks.
+ *
+ * Under `prefers-reduced-motion` the curve is simply there, fully drawn: the drawing
+ * is the decoration, the shape is the content, and withholding the shape until the
+ * reader scrolls would be dropping content rather than dropping motion.
  */
-function DegradationCurve({ series, bounds, progress, index }) {
+function DegradationCurve({ series, bounds, progress, index, reduced }) {
   const { from, to } = curveWindow(index)
-  const pathLength = useTransform(progress, [from, to], [0, 1], { clamp: true })
+  const drawn = useTransform(progress, [from, to], [0, 1], { clamp: true })
 
   return (
     <motion.path
@@ -58,20 +62,21 @@ function DegradationCurve({ series, bounds, progress, index }) {
       stroke={series.compound.color}
       strokeWidth="2.5"
       strokeLinecap="round"
-      style={{ pathLength }}
+      style={{ pathLength: reduced ? 1 : drawn }}
     />
   )
 }
 
-/** Legend entry that arrives as its curve finishes drawing. */
-function CurveKey({ series, progress, index }) {
+/** Legend entry that arrives as its curve finishes drawing — or is just present, with
+ *  reduced motion, since it carries the end-of-stint numbers. */
+function CurveKey({ series, progress, index, reduced }) {
   const { to } = curveWindow(index)
-  const opacity = useTransform(progress, [to - 0.12, to], [0.15, 1], { clamp: true })
+  const faded = useTransform(progress, [to - 0.12, to], [0.15, 1], { clamp: true })
   const end = series.points.at(-1).delta
 
   return (
     <motion.li
-      style={{ opacity }}
+      style={{ opacity: reduced ? 1 : faded }}
       className="flex items-center gap-1.5 text-[0.7rem] text-neutral-400 tabular-nums"
     >
       <span
@@ -79,7 +84,8 @@ function CurveKey({ series, progress, index }) {
         style={{ backgroundColor: series.compound.color }}
       />
       {series.compound.label}
-      <span className="text-neutral-600">
+      {/* Wraps the number so the sign and the value are one flex item, not two. */}
+      <span>
         {end >= 0 ? '+' : ''}
         {end.toFixed(1)}s
       </span>
@@ -128,6 +134,8 @@ export default function SimulatingScene({
   simulation,
   onRequestRun,
 }) {
+  const reduced = useReducedMotion()
+
   useEffect(() => {
     if (isActive) onRequestRun()
   }, [isActive, onRequestRun])
@@ -153,7 +161,7 @@ export default function SimulatingScene({
       ) : (
         <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-left">
-            <p className="text-[0.65rem] tracking-[0.2em] text-neutral-500 uppercase">
+            <p className="text-[0.65rem] tracking-[0.2em] text-neutral-400 uppercase">
               Degradation model
             </p>
             <p className="flex items-center gap-1.5 text-xs text-neutral-400">
@@ -196,21 +204,28 @@ export default function SimulatingScene({
                 bounds={bounds}
                 progress={progress}
                 index={index}
+                reduced={reduced}
               />
             ))}
           </svg>
 
-          <div className="mt-2 flex items-center justify-between text-[0.65rem] tracking-[0.12em] text-neutral-600 uppercase">
+          <div className="mt-2 flex items-center justify-between text-[0.65rem] tracking-[0.12em] text-neutral-400 uppercase">
             <span>Fresh</span>
             <span>{MAX_TIRE_AGE} laps old</span>
           </div>
 
           <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1">
             {series.map((s, index) => (
-              <CurveKey key={s.compound.id} series={s} progress={progress} index={index} />
+              <CurveKey
+                key={s.compound.id}
+                series={s}
+                progress={progress}
+                index={index}
+                reduced={reduced}
+              />
             ))}
           </ul>
-          <p className="mt-1 text-[0.7rem] text-neutral-600">
+          <p className="mt-1 text-[0.7rem] text-neutral-400">
             {paceModel
               ? `Wear measured at ${paceModel.degradation_per_lap.toFixed(3)}s/lap for this race`
               : 'Generic wear rates until the run comes back'}
@@ -226,14 +241,14 @@ export default function SimulatingScene({
             ) : status === 'ready' ? (
               <>
                 <div className="h-1 rounded-full bg-red-500" />
-                <p className="mt-3 text-xs tracking-[0.2em] text-neutral-500 uppercase">
+                <p className="mt-3 text-xs tracking-[0.2em] text-neutral-400 uppercase">
                   {MONTE_CARLO_RUNS.toLocaleString()} runs complete
                 </p>
               </>
             ) : (
               <>
                 <RunningBar />
-                <p className="mt-3 text-xs tracking-[0.2em] text-neutral-500 uppercase">
+                <p className="mt-3 text-xs tracking-[0.2em] text-neutral-400 uppercase">
                   Running {MONTE_CARLO_RUNS.toLocaleString()} simulations…
                 </p>
               </>

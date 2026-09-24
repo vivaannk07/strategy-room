@@ -14,7 +14,7 @@ export default function RequestError({ message, onRetry, className = 'py-8' }) {
         <button
           type="button"
           onClick={onRetry}
-          className="mt-4 rounded-full border border-neutral-700 px-4 py-1.5 text-xs tracking-wider text-neutral-300 uppercase hover:border-neutral-500"
+          className="tap-target mt-4 inline-flex items-center rounded-full border border-neutral-700 px-4 text-xs tracking-wider text-neutral-300 uppercase hover:border-neutral-500 active:border-neutral-500 active:bg-neutral-800/40"
         >
           Try again
         </button>

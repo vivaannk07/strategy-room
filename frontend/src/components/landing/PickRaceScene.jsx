@@ -44,21 +44,23 @@ function DriverPicker({ race, raceDetail, selectedDriverId, onSelectDriver, onCh
       <div className="flex items-baseline justify-between gap-3 text-left">
         <p className="min-w-0 truncate text-sm font-medium text-neutral-100">
           {race.race_name}{' '}
-          <span className="text-xs text-neutral-500 tabular-nums">
+          <span className="text-xs text-neutral-400 tabular-nums">
             {race.season} · R{race.round}
           </span>
         </p>
         <button
           type="button"
           onClick={onChangeRace}
-          className="shrink-0 text-xs tracking-wider text-neutral-400 uppercase hover:text-neutral-200"
+          // -mr-2 pulls the widened hit area back out to the card edge so the
+          // label still lines up with the heading beside it.
+          className="tap-target -mr-2 flex shrink-0 items-center justify-end px-2 text-xs tracking-wider text-neutral-400 uppercase hover:text-neutral-200 active:text-neutral-200"
         >
           Change race
         </button>
       </div>
 
       {raceDetail.status === 'loading' && (
-        <p className="py-8 text-sm text-neutral-500">
+        <p className="py-8 text-sm text-neutral-400">
           Loading drivers… the first time a race is opened it's fetched from Jolpica, so
           this can take a while.
         </p>
@@ -72,7 +74,7 @@ function DriverPicker({ race, raceDetail, selectedDriverId, onSelectDriver, onCh
       )}
 
       {raceDetail.status === 'ready' && drivers.length === 0 && (
-        <p className="py-8 text-sm text-neutral-500">No drivers are recorded for this race.</p>
+        <p className="py-8 text-sm text-neutral-400">No drivers are recorded for this race.</p>
       )}
 
       {raceDetail.status === 'ready' && drivers.length > 0 && (
@@ -86,22 +88,22 @@ function DriverPicker({ race, raceDetail, selectedDriverId, onSelectDriver, onCh
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => onSelectDriver(driver.driver_id)}
-                  className={`flex w-full items-baseline gap-3 rounded-lg border px-4 py-2.5 text-left transition-colors ${
+                  className={`tap-target flex w-full items-baseline gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
                     isSelected
                       ? 'border-red-500 bg-red-500/10'
-                      : 'border-neutral-800 hover:border-neutral-600'
+                      : 'border-neutral-800 hover:border-neutral-600 active:border-neutral-600 active:bg-neutral-800/40'
                   }`}
                 >
-                  <span className="w-12 shrink-0 truncate text-xs text-neutral-500 tabular-nums">
+                  <span className="w-12 shrink-0 truncate text-xs text-neutral-400 tabular-nums">
                     {finishLabel(driver)}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-neutral-100">
                     {driver.driver_name}
-                    <span className="ml-2 text-xs text-neutral-500">
+                    <span className="ml-2 text-xs text-neutral-400">
                       {driver.constructor_name}
                     </span>
                   </span>
-                  <span className="shrink-0 text-xs text-neutral-600 tabular-nums">
+                  <span className="shrink-0 text-xs text-neutral-400 tabular-nums">
                     {formatStopCount(driver.actual_pit_stops.length)}
                   </span>
                 </button>
@@ -111,7 +113,7 @@ function DriverPicker({ race, raceDetail, selectedDriverId, onSelectDriver, onCh
         </ul>
       )}
 
-      <p className="mt-4 text-xs tracking-[0.2em] text-neutral-600 uppercase">
+      <p className="mt-4 text-xs tracking-[0.2em] text-neutral-400 uppercase">
         {selectedDriver
           ? `Selected · ${selectedDriver.driver_name}`
           : 'Select a driver to continue'}
@@ -192,7 +194,7 @@ export default function PickRaceScene({
                 label={selectedRace?.circuit_name}
                 className="h-24 w-full sm:h-28 lg:h-auto lg:min-h-0 lg:flex-1"
               />
-              <p className="mt-2 truncate text-left text-[0.65rem] tracking-[0.2em] text-neutral-500 uppercase">
+              <p className="mt-2 truncate text-left text-[0.65rem] tracking-[0.2em] text-neutral-400 uppercase">
                 {selectedRace?.circuit_name ?? 'Any circuit on record'}
               </p>
             </div>
@@ -211,7 +213,7 @@ export default function PickRaceScene({
               )}
 
               {showRaces && status === 'loading' && (
-                <p className="py-8 text-sm text-neutral-500">Loading races…</p>
+                <p className="py-8 text-sm text-neutral-400">Loading races…</p>
               )}
 
               {showRaces && status === 'error' && (
@@ -219,7 +221,7 @@ export default function PickRaceScene({
               )}
 
               {showRaces && status === 'ready' && races.length === 0 && (
-                <p className="py-8 text-sm text-neutral-500">No races cached yet.</p>
+                <p className="py-8 text-sm text-neutral-400">No races cached yet.</p>
               )}
 
               {showRaces && status === 'ready' && races.length > 0 && (
@@ -229,21 +231,21 @@ export default function PickRaceScene({
                       <button
                         type="button"
                         onClick={() => onSelectRace(race)}
-                        className="w-full rounded-lg border border-neutral-800 px-4 py-3 text-left transition-colors hover:border-neutral-600"
+                        className="tap-target w-full rounded-lg border border-neutral-800 px-4 py-3 text-left transition-colors hover:border-neutral-600 active:border-neutral-600 active:bg-neutral-800/40"
                       >
                         <span className="flex items-baseline justify-between gap-3">
                           <span className="text-sm font-medium text-neutral-100">
                             {race.race_name}
                           </span>
-                          <span className="shrink-0 text-xs text-neutral-500 tabular-nums">
+                          <span className="shrink-0 text-xs text-neutral-400 tabular-nums">
                             {race.season} · R{race.round}
                           </span>
                         </span>
                         <span className="mt-1 flex items-baseline justify-between gap-3">
-                          <span className="text-xs text-neutral-500">
+                          <span className="text-xs text-neutral-400">
                             {race.circuit_name}
                           </span>
-                          <span className="shrink-0 text-xs text-neutral-600">
+                          <span className="shrink-0 text-xs text-neutral-400">
                             {formatDate(race.date)}
                           </span>
                         </span>
@@ -254,7 +256,7 @@ export default function PickRaceScene({
               )}
 
               {showRaces && (
-                <p className="mt-4 text-xs tracking-[0.2em] text-neutral-600 uppercase">
+                <p className="mt-4 text-xs tracking-[0.2em] text-neutral-400 uppercase">
                   Select a race to continue
                 </p>
               )}

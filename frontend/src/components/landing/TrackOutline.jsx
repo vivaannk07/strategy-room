@@ -74,7 +74,7 @@ export default function TrackOutline({ className = '', label }) {
         <text
           x="30"
           y="224"
-          className="fill-neutral-600 text-[11px] tracking-[0.2em] uppercase"
+          className="fill-neutral-400 text-[11px] tracking-[0.2em] uppercase"
         >
           S/F
         </text>

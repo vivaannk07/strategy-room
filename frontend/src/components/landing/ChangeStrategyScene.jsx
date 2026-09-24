@@ -69,14 +69,14 @@ export default function ChangeStrategyScene({ race, driver, strategy, onChange }
     <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
       <div className="flex items-baseline justify-between gap-4 text-left">
         <div>
-          <p className="text-[0.65rem] tracking-[0.2em] text-neutral-500 uppercase">
+          <p className="text-[0.65rem] tracking-[0.2em] text-neutral-400 uppercase">
             {actualFirstStop ? 'First stop' : 'Add a stop'}
           </p>
           <p className="mt-1 text-3xl font-semibold text-neutral-50 tabular-nums sm:text-4xl">
             Lap {strategy.lap}
           </p>
         </div>
-        <p className="text-right text-xs text-neutral-500">
+        <p className="text-right text-xs text-neutral-400">
           {lapsMoved === null
             ? 'They never stopped on the day'
             : lapsMoved === 0
@@ -96,28 +96,31 @@ export default function ChangeStrategyScene({ race, driver, strategy, onChange }
           value={strategy.lap}
           onChange={(event) => onChange({ lap: Number(event.target.value) })}
           aria-label="Lap to pit on"
-          // The filled half of the track is painted as a gradient: a native range
-          // input gives no hook for "progress so far" that works in every engine.
+          // The filled half of the track is painted as a background image rather
+          // than a background colour: a native range input gives no hook for
+          // "progress so far" that works in every engine, and the input itself is
+          // now 44px tall (a thumb-sized hit strip for a finger) with the visible
+          // 10px track drawn centred inside it via `background-size`/`position`.
           style={{
-            background: `linear-gradient(to right, #ef4444 ${percentOf(
+            backgroundImage: `linear-gradient(to right, #ef4444 ${percentOf(
               strategy.lap,
               range,
             )}%, #262626 ${percentOf(strategy.lap, range)}%)`,
           }}
-          className="h-2.5 w-full cursor-pointer appearance-none rounded-full outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-4 focus-visible:ring-offset-neutral-950 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-red-500 [&::-moz-range-thumb]:bg-neutral-950 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-red-500 [&::-webkit-slider-thumb]:bg-neutral-950 [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(239,68,68,0.18)]"
+          className="h-11 w-full cursor-pointer appearance-none bg-[length:100%_10px] bg-center bg-no-repeat [background-clip:content-box] outline-none [border-radius:9999px] focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-red-500 [&::-moz-range-thumb]:bg-neutral-950 [&::-moz-range-track]:h-2.5 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-transparent [&::-webkit-slider-runnable-track]:h-2.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-red-500 [&::-webkit-slider-thumb]:bg-neutral-950"
         />
 
         <div className="relative mt-2 h-8">
-          <span className="absolute left-0 text-[0.65rem] text-neutral-600 tabular-nums">
+          <span className="absolute left-0 text-[0.65rem] text-neutral-400 tabular-nums">
             Lap {range.min}
           </span>
-          <span className="absolute right-0 text-[0.65rem] text-neutral-600 tabular-nums">
+          <span className="absolute right-0 text-[0.65rem] text-neutral-400 tabular-nums">
             Lap {range.max}
           </span>
           {/* Where the real stop came, so the user can see what they moved away from. */}
           {actualFirstStop && (
             <span
-              className="absolute -translate-x-1/2 text-[0.65rem] whitespace-nowrap text-neutral-500"
+              className="absolute -translate-x-1/2 text-[0.65rem] whitespace-nowrap text-neutral-400"
               style={{ left: `${percentOf(actualFirstStop.lap, range)}%` }}
             >
               <span className="mx-auto mb-1 block h-2 w-px bg-neutral-600" />
@@ -128,7 +131,7 @@ export default function ChangeStrategyScene({ race, driver, strategy, onChange }
       </div>
 
       <fieldset className="mt-3">
-        <legend className="mx-auto text-[0.65rem] tracking-[0.2em] text-neutral-500 uppercase">
+        <legend className="mx-auto text-[0.65rem] tracking-[0.2em] text-neutral-400 uppercase">
           Fit which tyre
         </legend>
         <div className="mt-3 flex flex-wrap justify-center gap-2.5">
@@ -136,7 +139,7 @@ export default function ChangeStrategyScene({ race, driver, strategy, onChange }
             const isSelected = option.id === strategy.compound
 
             return (
-              <label key={option.id} className="cursor-pointer">
+              <label key={option.id} className="tap-target flex cursor-pointer items-center">
                 <input
                   type="radio"
                   name="compound"
@@ -146,10 +149,10 @@ export default function ChangeStrategyScene({ race, driver, strategy, onChange }
                   className="peer sr-only"
                 />
                 <span
-                  className={`block rounded-full border px-4 py-1.5 text-xs tracking-wider uppercase transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-red-500/60 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-neutral-950 ${
+                  className={`block w-full rounded-full border px-4 py-2 text-xs tracking-wider uppercase transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-red-500/60 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-neutral-950 ${
                     isSelected
                       ? option.chip
-                      : 'border-neutral-700 text-neutral-500 hover:border-neutral-500 hover:text-neutral-300'
+                      : 'border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-200 active:border-neutral-500 active:text-neutral-200'
                   }`}
                 >
                   {option.label}
@@ -158,7 +161,7 @@ export default function ChangeStrategyScene({ race, driver, strategy, onChange }
             )
           })}
         </div>
-        <p className="mt-3 text-xs text-neutral-500">
+        <p className="mt-3 text-xs text-neutral-400">
           {compound.label} runs {compound.ratio.toFixed(1)}× the measured degradation
           {compound.freshOffset === 0
             ? ''
@@ -173,7 +176,7 @@ export default function ChangeStrategyScene({ race, driver, strategy, onChange }
         <StintBar stints={actualStints} showLabels={false} rowLabel="Actual" />
         <StintBar stints={stints} showLabels={false} rowLabel="Your call" />
         {keptStops.length > 0 && (
-          <p className="text-left text-[0.7rem] text-neutral-600">
+          <p className="text-left text-[0.7rem] text-neutral-400">
             {keptStops.length === 1 ? 'The later stop stays' : 'Later stops stay'} on the real
             lap{keptStops.length === 1 ? '' : 's'} (
             {keptStops.map((stop) => `L${stop.lap}`).join(', ')}), modeled on{' '}
