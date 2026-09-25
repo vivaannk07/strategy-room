@@ -78,6 +78,63 @@ export function simulationErrorMessage(error) {
     : error.message
 }
 
+/**
+ * Background tint per compound, in the broadcast colours. Wider than `COMPOUNDS` on
+ * purpose: the backend accepts intermediate and wet, so a tint exists for them even
+ * though the picker doesn't offer them.
+ */
+export const COMPOUND_TINTS = {
+  soft: '#E10600',
+  medium: '#FFD200',
+  hard: '#F0F0F0',
+  intermediate: '#43B02A',
+  wet: '#0067AD',
+}
+
+/** Tint for "no compound to show" — also what any unknown compound gets. */
+export const NEUTRAL_TINT = '#FFFFFF'
+
+/**
+ * Scene 5's tint when the simulated call beats the real one, and when it doesn't. The
+ * losing grey is a darker slate so it can't be mistaken for scene 2's neutral grey
+ * (`ACTUAL_COLOR`, #a3a3a3).
+ */
+export const WIN_TINT = '#A855F7'
+export const NO_WIN_TINT = '#64748B'
+
+/** Tint for a compound id. Anything missing or unrecognised gets `NEUTRAL_TINT`. */
+export function compoundTint(id) {
+  return typeof id === 'string' && Object.hasOwn(COMPOUND_TINTS, id)
+    ? COMPOUND_TINTS[id]
+    : NEUTRAL_TINT
+}
+
+/** The finish position the most runs ended in, with its share of the runs. */
+export function likeliestFinish(distribution) {
+  const entries = Object.entries(distribution ?? {})
+  const total = entries.reduce((sum, [, count]) => sum + count, 0)
+  const [position, count] = entries.reduce(
+    (best, entry) => (entry[1] > best[1] ? entry : best),
+    ['0', 0],
+  )
+  return { position: Number(position), share: total ? count / total : 0 }
+}
+
+/**
+ * Whether a `POST /api/simulate` result beats the real race, judged the way scene 5's
+ * headline reads it: on time (to the tenth it displays) when the driver has a race time,
+ * otherwise on the likeliest finish against the real classified position. A driver with
+ * no classified position can't be beaten on position, so that's a no.
+ */
+export function simulationBeatsActual(result, driver) {
+  const delta = result?.simulated?.delta_vs_actual_seconds
+  if (delta != null) return Number(delta.toFixed(1)) < 0
+
+  const actual = Number(driver?.actual_position_text)
+  const { position } = likeliestFinish(result?.simulated?.finish_position_distribution)
+  return Number.isInteger(actual) && position > 0 && position < actual
+}
+
 /** Compound lookup that never returns undefined — falls back to medium. */
 export function compoundById(id) {
   return COMPOUNDS.find((compound) => compound.id === id) ?? COMPOUNDS[1]

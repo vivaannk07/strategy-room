@@ -1,22 +1,19 @@
 import { motion, useReducedMotion } from 'framer-motion'
+import { circuitFor } from '../../data/circuits'
 
 /**
- * Generic circuit outline with a light running a lap around it.
+ * Circuit outline with a light running a lap around it.
  *
- * Deliberately not a real circuit yet — it's a placeholder shape that reads as "a
- * track" until real geometry arrives. When it does, only `TRACK_PATH` changes.
+ * The geometry comes from `src/data/circuits.js`, shared with the story's backdrop
+ * track, so a real circuit added there shows up in both. Until then every race gets the
+ * generic fallback shape.
  *
  * The car is a short stroke dash chasing its own offset rather than an element on an
  * `offset-path`: dash animation is supported everywhere and stays on the compositor.
  */
-const TRACK_PATH =
-  'M60 196 C60 170 62 150 82 140 C108 128 150 140 168 122 C186 104 172 78 192 64 ' +
-  'C214 48 252 56 272 44 C296 30 330 36 342 58 C354 80 338 104 314 112 ' +
-  'C286 122 252 112 236 130 C220 148 236 170 222 188 C206 208 166 206 130 208 ' +
-  'C96 210 60 216 60 196 Z'
-
-export default function TrackOutline({ className = '', label }) {
+export default function TrackOutline({ className = '', label, circuitId }) {
   const reduced = useReducedMotion()
+  const trackPath = circuitFor(circuitId).path
 
   return (
     <svg
@@ -34,7 +31,7 @@ export default function TrackOutline({ className = '', label }) {
 
       {/* Run-off around the outside of the ribbon. */}
       <path
-        d={TRACK_PATH}
+        d={trackPath}
         fill="none"
         stroke="#ef4444"
         strokeOpacity="0.08"
@@ -43,7 +40,7 @@ export default function TrackOutline({ className = '', label }) {
       />
       {/* The track ribbon itself. */}
       <path
-        d={TRACK_PATH}
+        d={trackPath}
         fill="none"
         stroke="url(#to-edge)"
         strokeWidth="11"
@@ -51,7 +48,7 @@ export default function TrackOutline({ className = '', label }) {
       />
       {/* Centre line, so the ribbon reads as a road rather than a border. */}
       <path
-        d={TRACK_PATH}
+        d={trackPath}
         fill="none"
         stroke="#0a0a0a"
         strokeWidth="1"
@@ -87,7 +84,7 @@ export default function TrackOutline({ className = '', label }) {
         back where it started, which makes the loop seamless without measuring the path.
       */}
       <motion.path
-        d={TRACK_PATH}
+        d={trackPath}
         pathLength="1000"
         fill="none"
         stroke="#ef4444"

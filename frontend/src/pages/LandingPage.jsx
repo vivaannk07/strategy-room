@@ -2,15 +2,22 @@ import { useState } from 'react'
 import ScrollStory from '../components/ScrollStory'
 import ActualStrategyScene from '../components/landing/ActualStrategyScene'
 import ChangeStrategyScene from '../components/landing/ChangeStrategyScene'
+import { ACTUAL_COLOR } from '../components/landing/PositionChart'
 import PickRaceScene from '../components/landing/PickRaceScene'
 import ResultScene from '../components/landing/ResultScene'
 import SimulatingScene from '../components/landing/SimulatingScene'
+import StoryBackdrop from '../components/landing/StoryBackdrop'
 import { fetchDriverLaps, fetchRaceDetail, runSimulation } from '../lib/api'
 import {
   DEFAULT_HYPOTHETICAL_COMPOUND,
   MONTE_CARLO_RUNS,
+  NEUTRAL_TINT,
+  NO_WIN_TINT,
+  WIN_TINT,
   buildHypotheticalStrategy,
+  compoundTint,
   initialPitLap,
+  simulationBeatsActual,
 } from '../lib/raceData'
 import { useApiResource } from '../lib/useApiResource'
 
@@ -21,6 +28,30 @@ const loadRaceDetail = ({ season, round }, signal) =>
 const loadDriverLaps = ({ season, round, driverId }, signal) =>
   fetchDriverLaps({ season, round, driverId, signal })
 const loadSimulation = (request, signal) => runSimulation({ ...request, signal })
+
+/**
+ * The backdrop tint for each of the five scenes, in order, from state the scenes already
+ * read. Every colour resolves through `compoundTint` or a named constant, so an unknown or
+ * missing compound lands on neutral rather than an undefined colour.
+ */
+function buildTints({ driver, pitCall, simulation }) {
+  const hypothetical = compoundTint(pitCall.compound)
+  const won =
+    driver != null &&
+    simulation.status === 'ready' &&
+    simulationBeatsActual(simulation.data, driver)
+
+  return [
+    { color: NEUTRAL_TINT, strength: 0.5 },
+    // No F1 data source publishes tyre compounds, so the actual strategy never gets a
+    // compound colour. Grey means "what really happened", colour means "your hypothetical".
+    { color: ACTUAL_COLOR, strength: 1 },
+    { color: hypothetical, strength: 1 },
+    // Scene 4 simulates the call made in scene 3, so it keeps scene 3's colour.
+    { color: hypothetical, strength: 1 },
+    { color: won ? WIN_TINT : NO_WIN_TINT, strength: 1 },
+  ]
+}
 
 /**
  * The five beats of the landing story, in order.
@@ -183,8 +214,13 @@ export default function LandingPage() {
     onRequestSimulation: requestSimulation,
   })
 
+  const tints = buildTints({ driver, pitCall, simulation })
+
   return (
-    <main className="bg-neutral-950 text-neutral-100">
+    // `isolate`: the story's backdrop sits at a negative z-index behind the hero, the
+    // scenes and the footer, and this is the stacking context it sits in — without it,
+    // this background would paint over it.
+    <main className="isolate bg-neutral-950 text-neutral-100">
       <section className="safe-px safe-py flex h-stage flex-col items-center justify-center [--pad-x:1.5rem] [--pad-y:2.5rem] text-center">
         <p className="text-[0.7rem] font-medium tracking-[0.3em] text-red-500 uppercase">
           Strategy Room
@@ -200,7 +236,13 @@ export default function LandingPage() {
         </p>
       </section>
 
-      <ScrollStory id="story" scenes={scenes} />
+      <ScrollStory
+        id="story"
+        scenes={scenes}
+        backdrop={(stage) => (
+          <StoryBackdrop {...stage} tints={tints} circuitId={race?.circuit_id} />
+        )}
+      />
 
       <section className="safe-px flex h-[60svh] items-center justify-center [--pad-x:1.5rem] pb-[env(safe-area-inset-bottom)]">
         <p className="text-sm text-neutral-400">End of story placeholder</p>

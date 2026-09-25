@@ -178,7 +178,7 @@ export default function PickRaceScene({
 
   return (
     <>
-      <CircuitBackdrop />
+      <CircuitBackdrop seeThrough />
 
       {/* z-10: the backdrop is positioned, so without it the art would paint over this. */}
       <div className="relative z-10 w-full">
@@ -189,9 +189,10 @@ export default function PickRaceScene({
         >
           <div className="grid gap-4 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-stretch">
             {/* Art comes after the list on narrow screens — the list is the job. */}
-            <div className="order-2 flex flex-col rounded-2xl border border-neutral-800 bg-neutral-900/40 p-4 lg:order-1">
+            <div className="order-2 flex flex-col rounded-2xl border border-neutral-800 bg-neutral-900 p-4 lg:order-1">
               <TrackOutline
                 label={selectedRace?.circuit_name}
+                circuitId={selectedRace?.circuit_id}
                 className="h-24 w-full sm:h-28 lg:h-auto lg:min-h-0 lg:flex-1"
               />
               <p className="mt-2 truncate text-left text-[0.65rem] tracking-[0.2em] text-neutral-400 uppercase">
@@ -201,7 +202,7 @@ export default function PickRaceScene({
 
             {/* min-w-0: a grid item won't shrink below its content by default, and the
                 driver rows' truncating names would otherwise push the card off-screen. */}
-            <div className="order-1 w-full min-w-0 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-6 lg:order-2">
+            <div className="order-1 w-full min-w-0 rounded-2xl border border-neutral-800 bg-neutral-900 p-5 sm:p-6 lg:order-2">
               {selectedRace && (
                 <DriverPicker
                   race={selectedRace}

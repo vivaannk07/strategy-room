@@ -9,23 +9,13 @@ import {
   buildHypotheticalStrategy,
   compoundById,
   formatRaceTime,
+  likeliestFinish,
   simulationErrorMessage,
 } from '../../lib/raceData'
 
 // Ties the two position charts together: Recharts puts the cursor and tooltip on the
 // same lap in both panels whichever one the pointer is over.
 const POSITION_SYNC_ID = 'result-position'
-
-/** The finish position the most runs ended in, with its share of the runs. */
-function likeliestFinish(distribution) {
-  const entries = Object.entries(distribution)
-  const total = entries.reduce((sum, [, count]) => sum + count, 0)
-  const [position, count] = entries.reduce(
-    (best, entry) => (entry[1] > best[1] ? entry : best),
-    ['0', 0],
-  )
-  return { position: Number(position), share: total ? count / total : 0 }
-}
 
 /**
  * The headline, taken from the response's own `delta_vs_actual_seconds` (mean simulated
@@ -60,7 +50,7 @@ function headline(result, driver) {
  * inside the pinned stage at 390×844 (they overflowed it by 125px when the rows
  * stacked on mobile).
  */
-const PANEL = 'rounded-2xl border border-neutral-800 bg-neutral-900/50 p-3 text-left sm:p-5'
+const PANEL = 'rounded-2xl border border-neutral-800 bg-neutral-900 p-3 text-left sm:p-5'
 const PANEL_LABEL = 'truncate text-[0.6rem] tracking-[0.15em] uppercase sm:text-[0.65rem] sm:tracking-[0.2em]'
 
 /** A tile for one side of the comparison. */
@@ -130,7 +120,7 @@ export default function ResultScene({
   if (simulation.status === 'error') {
     const { error } = simulation
     return frame(
-      <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900 p-5 sm:p-7">
         <RequestError
           message={simulationErrorMessage(error)}
           onRetry={isRetryable(error) ? simulation.retry : undefined}

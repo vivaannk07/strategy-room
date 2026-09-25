@@ -9,9 +9,13 @@ import { motion, useReducedMotion } from 'framer-motion'
  *
  * Sits behind the scene's content and is decorative, so it's `aria-hidden` and
  * pointer-transparent. The whole layer fades with its scene via <ScrollStory>.
+ *
+ * `seeThrough` thins the sky, ground and vignette so a layer behind the whole story (the
+ * landing page's <StoryBackdrop>) still shows through; without it the art is opaque.
  */
-export default function CircuitBackdrop({ className = '' }) {
+export default function CircuitBackdrop({ className = '', seeThrough = false }) {
   const reduced = useReducedMotion()
+  const fillOpacity = seeThrough ? 0.45 : 1
 
   return (
     <div
@@ -47,7 +51,7 @@ export default function CircuitBackdrop({ className = '' }) {
           </filter>
         </defs>
 
-        <rect width="1200" height="700" fill="url(#cb-sky)" />
+        <rect width="1200" height="700" fill="url(#cb-sky)" fillOpacity={fillOpacity} />
         <ellipse cx="600" cy="452" rx="660" ry="210" fill="url(#cb-horizon)" />
 
         {/* Grandstands and trees on the far side of the circuit. */}
@@ -112,8 +116,18 @@ export default function CircuitBackdrop({ className = '' }) {
         ))}
 
         {/* Track surface sweeping out of frame, with kerbing along the inside. */}
-        <rect y="452" width="1200" height="248" fill="url(#cb-ground)" />
-        <path d="M-40 700 L430 452 L560 452 L240 700 Z" fill="#111010" />
+        <rect
+          y="452"
+          width="1200"
+          height="248"
+          fill="url(#cb-ground)"
+          fillOpacity={fillOpacity}
+        />
+        <path
+          d="M-40 700 L430 452 L560 452 L240 700 Z"
+          fill="#111010"
+          fillOpacity={fillOpacity}
+        />
         <path
           d="M430 452 L560 452 L240 700"
           fill="none"
@@ -143,7 +157,11 @@ export default function CircuitBackdrop({ className = '' }) {
       </svg>
 
       {/* Vignette: pulls the edges down so the scene's text stays the brightest thing. */}
-      <div className="absolute inset-0 bg-radial-[at_50%_45%] from-transparent via-neutral-950/45 to-neutral-950/95" />
+      <div
+        className={`absolute inset-0 bg-radial-[at_50%_45%] from-transparent ${
+          seeThrough ? 'via-neutral-950/20 to-neutral-950/60' : 'via-neutral-950/45 to-neutral-950/95'
+        }`}
+      />
     </div>
   )
 }

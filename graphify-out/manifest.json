@@ -1,0 +1,374 @@
+{
+  "backend/app/__init__.py": {
+    "mtime": 1787590094.6144893,
+    "seen": 1790312169.3640628,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/app/config.py": {
+    "mtime": 1787769439.3167217,
+    "seen": 1790312169.3640754,
+    "ast_hash": "0e9a9592f967a066aeb604634f82d98a",
+    "semantic_hash": "0e9a9592f967a066aeb604634f82d98a"
+  },
+  "backend/app/db.py": {
+    "mtime": 1787844078.2237566,
+    "seen": 1790312169.364081,
+    "ast_hash": "1a4f6ce72f10732f9a68835ad58e4d0e",
+    "semantic_hash": "1a4f6ce72f10732f9a68835ad58e4d0e"
+  },
+  "backend/app/ingest.py": {
+    "mtime": 1787769610.7504356,
+    "seen": 1790312169.3640842,
+    "ast_hash": "8a92df22d6aa897ba44f82d4c196569f",
+    "semantic_hash": "8a92df22d6aa897ba44f82d4c196569f"
+  },
+  "backend/app/jolpica.py": {
+    "mtime": 1787769556.2447464,
+    "seen": 1790312169.3640878,
+    "ast_hash": "aeeff08ee0c2dad6d2f110da54773972",
+    "semantic_hash": "aeeff08ee0c2dad6d2f110da54773972"
+  },
+  "backend/app/main.py": {
+    "mtime": 1790274364.0902903,
+    "seen": 1790312169.3640912,
+    "ast_hash": "cc767b3bea3c3c0bcf456d9fbce367ce",
+    "semantic_hash": "cc767b3bea3c3c0bcf456d9fbce367ce"
+  },
+  "backend/app/pace_model.py": {
+    "mtime": 1788971466.1693015,
+    "seen": 1790312169.3640947,
+    "ast_hash": "19436ee8fdfc45737a3d17f51216edf2",
+    "semantic_hash": "19436ee8fdfc45737a3d17f51216edf2"
+  },
+  "backend/app/repository.py": {
+    "mtime": 1789139771.9976418,
+    "seen": 1790312169.3640978,
+    "ast_hash": "a9c24fddb90d94d29b3743a7f5ce0f5d",
+    "semantic_hash": "a9c24fddb90d94d29b3743a7f5ce0f5d"
+  },
+  "backend/app/routers/__init__.py": {
+    "mtime": 1787590094.6646724,
+    "seen": 1790312169.3641007,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "backend/app/routers/races.py": {
+    "mtime": 1789139781.8944905,
+    "seen": 1790312169.3641038,
+    "ast_hash": "aecfd84b7a86824085662cd573c0878c",
+    "semantic_hash": "aecfd84b7a86824085662cd573c0878c"
+  },
+  "backend/app/routers/simulate.py": {
+    "mtime": 1787891993.8525035,
+    "seen": 1790312169.364107,
+    "ast_hash": "94692c4fffa3461e81fb3ce13d3f3526",
+    "semantic_hash": "94692c4fffa3461e81fb3ce13d3f3526"
+  },
+  "backend/app/schemas.py": {
+    "mtime": 1789139762.678306,
+    "seen": 1790312169.3641102,
+    "ast_hash": "91d902f22a7da7cb0bd8ace9907048c1",
+    "semantic_hash": "91d902f22a7da7cb0bd8ace9907048c1"
+  },
+  "backend/app/simulation.py": {
+    "mtime": 1788104817.0520158,
+    "seen": 1790312169.364113,
+    "ast_hash": "d917941884cda7784ddb8e68dad26b90",
+    "semantic_hash": "d917941884cda7784ddb8e68dad26b90"
+  },
+  "backend/migrations/001_pace_model_tables.sql": {
+    "mtime": 1787891711.3853679,
+    "seen": 1790312169.3641162,
+    "ast_hash": "347906363bc282acc20cc147182340b8",
+    "semantic_hash": "347906363bc282acc20cc147182340b8"
+  },
+  "backend/migrations/002_green_reference_pace.sql": {
+    "mtime": 1788020850.1981168,
+    "seen": 1790312169.3641188,
+    "ast_hash": "32920380152262abdd16422d81dbbcfa",
+    "semantic_hash": "32920380152262abdd16422d81dbbcfa"
+  },
+  "backend/schema.sql": {
+    "mtime": 1788020850.1981168,
+    "seen": 1790312169.3641217,
+    "ast_hash": "7b1d55b60f7b5acbcb2b3fbca0aa97a2",
+    "semantic_hash": "7b1d55b60f7b5acbcb2b3fbca0aa97a2"
+  },
+  "backend/scripts/fit_pace_model.py": {
+    "mtime": 1788020911.2373967,
+    "seen": 1790312169.364124,
+    "ast_hash": "9f0b09f7dea309dc246c32185ff5d917",
+    "semantic_hash": "9f0b09f7dea309dc246c32185ff5d917"
+  },
+  "backend/scripts/ingest_race.py": {
+    "mtime": 1787892027.3736377,
+    "seen": 1790312169.3641272,
+    "ast_hash": "225cedbb6070b803d76b1fa11becaf70",
+    "semantic_hash": "225cedbb6070b803d76b1fa11becaf70"
+  },
+  "frontend/.oxlintrc.json": {
+    "mtime": 1787589137.6256404,
+    "seen": 1790312169.3641303,
+    "ast_hash": "5e6e3cea3e89137071c142dd7835b0ef",
+    "semantic_hash": "5e6e3cea3e89137071c142dd7835b0ef"
+  },
+  "frontend/package.json": {
+    "mtime": 1787589195.8722653,
+    "seen": 1790312169.3641331,
+    "ast_hash": "ebeae59e77c8f409c208f0820cfe0d83",
+    "semantic_hash": "ebeae59e77c8f409c208f0820cfe0d83"
+  },
+  "frontend/src/App.jsx": {
+    "mtime": 1789143347.851962,
+    "seen": 1790312169.364136,
+    "ast_hash": "d3c9cc8c49ce41b2148742743173357a",
+    "semantic_hash": "d3c9cc8c49ce41b2148742743173357a"
+  },
+  "frontend/src/components/ScrollStory.jsx": {
+    "mtime": 1790311419.044176,
+    "seen": 1790312169.364139,
+    "ast_hash": "8007abda76ab8a71bdcea3ed90ffe87f",
+    "semantic_hash": "8007abda76ab8a71bdcea3ed90ffe87f"
+  },
+  "frontend/src/components/landing/ActualStrategyScene.jsx": {
+    "mtime": 1790275796.0229218,
+    "seen": 1790312169.3641438,
+    "ast_hash": "a3009168c481441bf56142c71668a1d5",
+    "semantic_hash": "a3009168c481441bf56142c71668a1d5"
+  },
+  "frontend/src/components/landing/ChangeStrategyScene.jsx": {
+    "mtime": 1790275797.5924501,
+    "seen": 1790312169.3641467,
+    "ast_hash": "3303f76498c31daeb4db76638ea831ad",
+    "semantic_hash": "3303f76498c31daeb4db76638ea831ad"
+  },
+  "frontend/src/components/landing/CircuitBackdrop.jsx": {
+    "mtime": 1790271174.9754624,
+    "seen": 1790312169.3641498,
+    "ast_hash": "cd6954b78734ca608105866aad06a5c4",
+    "semantic_hash": "cd6954b78734ca608105866aad06a5c4"
+  },
+  "frontend/src/components/landing/LapPaceChart.jsx": {
+    "mtime": 1790005748.5166965,
+    "seen": 1790312169.3641527,
+    "ast_hash": "d4165b81b38c977136fabb9f53fc27d7",
+    "semantic_hash": "d4165b81b38c977136fabb9f53fc27d7"
+  },
+  "frontend/src/components/landing/PickFirst.jsx": {
+    "mtime": 1790275797.907596,
+    "seen": 1790312169.364156,
+    "ast_hash": "8104ca5489b7908abd52caf22cd20acf",
+    "semantic_hash": "8104ca5489b7908abd52caf22cd20acf"
+  },
+  "frontend/src/components/landing/PickRaceScene.jsx": {
+    "mtime": 1790275796.4755907,
+    "seen": 1790312169.3641586,
+    "ast_hash": "bb8f24f6d15fe6dbfeb534aec98644cd",
+    "semantic_hash": "bb8f24f6d15fe6dbfeb534aec98644cd"
+  },
+  "frontend/src/components/landing/PositionChart.jsx": {
+    "mtime": 1790005748.5250852,
+    "seen": 1790312169.3641613,
+    "ast_hash": "4d927cd8fc8f0cb098d8dfc4d87caafe",
+    "semantic_hash": "4d927cd8fc8f0cb098d8dfc4d87caafe"
+  },
+  "frontend/src/components/landing/RequestError.jsx": {
+    "mtime": 1789963853.8113801,
+    "seen": 1790312169.364164,
+    "ast_hash": "ae47f81aa63b511f32ddc4959d0ed81a",
+    "semantic_hash": "ae47f81aa63b511f32ddc4959d0ed81a"
+  },
+  "frontend/src/components/landing/ResultScene.jsx": {
+    "mtime": 1790275797.1481762,
+    "seen": 1790312169.364167,
+    "ast_hash": "6432cddbd9f84e0fea57a8aa4c16169d",
+    "semantic_hash": "6432cddbd9f84e0fea57a8aa4c16169d"
+  },
+  "frontend/src/components/landing/SceneFrame.jsx": {
+    "mtime": 1788972375.8136714,
+    "seen": 1790312169.3641698,
+    "ast_hash": "8efed9af56ae1e77b428ad10e6eaa0e7",
+    "semantic_hash": "8efed9af56ae1e77b428ad10e6eaa0e7"
+  },
+  "frontend/src/components/landing/SimulatingScene.jsx": {
+    "mtime": 1790275796.813206,
+    "seen": 1790312169.3641725,
+    "ast_hash": "2ef83a2f5a2bbfb414d88559c7674e42",
+    "semantic_hash": "2ef83a2f5a2bbfb414d88559c7674e42"
+  },
+  "frontend/src/components/landing/StintBar.jsx": {
+    "mtime": 1790005695.5475478,
+    "seen": 1790312169.3641756,
+    "ast_hash": "300a1b33babdbaebec0e0a708699c32e",
+    "semantic_hash": "300a1b33babdbaebec0e0a708699c32e"
+  },
+  "frontend/src/components/landing/StoryBackdrop.jsx": {
+    "mtime": 1790311646.3803935,
+    "seen": 1790312169.3641787,
+    "ast_hash": "6b9743dd58d4be52378190e478ae2186",
+    "semantic_hash": "6b9743dd58d4be52378190e478ae2186"
+  },
+  "frontend/src/components/landing/TrackOutline.jsx": {
+    "mtime": 1790271174.9797304,
+    "seen": 1790312169.3641815,
+    "ast_hash": "0e3fd86b9474ffdddacc348cb0545611",
+    "semantic_hash": "0e3fd86b9474ffdddacc348cb0545611"
+  },
+  "frontend/src/components/landing/mock/ActualStrategyScene.jsx": {
+    "mtime": 1789143279.426706,
+    "seen": 1790312169.3641844,
+    "ast_hash": "5ddc3e887e5bd497d4ad2543dfa87108",
+    "semantic_hash": "5ddc3e887e5bd497d4ad2543dfa87108"
+  },
+  "frontend/src/components/landing/mock/ChangeStrategyScene.jsx": {
+    "mtime": 1790005770.7133386,
+    "seen": 1790312169.3641896,
+    "ast_hash": "6f6cc1a42cdbc39a82b7b234f78a5977",
+    "semantic_hash": "6f6cc1a42cdbc39a82b7b234f78a5977"
+  },
+  "frontend/src/components/landing/mock/LapPaceChart.jsx": {
+    "mtime": 1789143279.683304,
+    "seen": 1790312169.3641927,
+    "ast_hash": "1295687f68a55ef4822d7bb045fa394d",
+    "semantic_hash": "1295687f68a55ef4822d7bb045fa394d"
+  },
+  "frontend/src/components/landing/mock/PickRaceScene.jsx": {
+    "mtime": 1789143318.2573023,
+    "seen": 1790312169.3641958,
+    "ast_hash": "d50086b590aa37e69818b78b14a2a04c",
+    "semantic_hash": "d50086b590aa37e69818b78b14a2a04c"
+  },
+  "frontend/src/components/landing/mock/ResultScene.jsx": {
+    "mtime": 1789143279.619608,
+    "seen": 1790312169.3641984,
+    "ast_hash": "6fcc2bb9413ea2082870f7a02c97abff",
+    "semantic_hash": "6fcc2bb9413ea2082870f7a02c97abff"
+  },
+  "frontend/src/components/landing/mock/SimulatingScene.jsx": {
+    "mtime": 1789143279.5527835,
+    "seen": 1790312169.3642013,
+    "ast_hash": "72f84cbce196090bdb56c54d2bfbb67f",
+    "semantic_hash": "72f84cbce196090bdb56c54d2bfbb67f"
+  },
+  "frontend/src/data/circuits.js": {
+    "mtime": 1790275314.450515,
+    "seen": 1790312169.364204,
+    "ast_hash": "6c2d689fa298ecec616ed3a9e714ce3b",
+    "semantic_hash": "6c2d689fa298ecec616ed3a9e714ce3b"
+  },
+  "frontend/src/lib/api.js": {
+    "mtime": 1789140005.7341995,
+    "seen": 1790312169.364209,
+    "ast_hash": "ef1931b4f945c870d70368ec419f24a9",
+    "semantic_hash": "ef1931b4f945c870d70368ec419f24a9"
+  },
+  "frontend/src/lib/mockRaceData.js": {
+    "mtime": 1789143333.5151298,
+    "seen": 1790312169.3642118,
+    "ast_hash": "9a55d351c4d07392d79bfa4d1ffe17d2",
+    "semantic_hash": "9a55d351c4d07392d79bfa4d1ffe17d2"
+  },
+  "frontend/src/lib/raceData.js": {
+    "mtime": 1790310422.049617,
+    "seen": 1790312169.364215,
+    "ast_hash": "2252fcb9049716e0e32cd0fe9e8d4b91",
+    "semantic_hash": "2252fcb9049716e0e32cd0fe9e8d4b91"
+  },
+  "frontend/src/lib/useApiResource.js": {
+    "mtime": 1789140016.4194324,
+    "seen": 1790312169.3642178,
+    "ast_hash": "ca8aa1a39310510f245cad3b4e122ef2",
+    "semantic_hash": "ca8aa1a39310510f245cad3b4e122ef2"
+  },
+  "frontend/src/main.jsx": {
+    "mtime": 1787589137.6891677,
+    "seen": 1790312169.3642209,
+    "ast_hash": "e13723e2574429d9a6d849727e3ff695",
+    "semantic_hash": "e13723e2574429d9a6d849727e3ff695"
+  },
+  "frontend/src/pages/LandingPage.jsx": {
+    "mtime": 1790310414.8014343,
+    "seen": 1790312169.3642237,
+    "ast_hash": "68a06344fa59d99a8bdc1536c06df4a1",
+    "semantic_hash": "68a06344fa59d99a8bdc1536c06df4a1"
+  },
+  "frontend/src/pages/MockLandingPage.jsx": {
+    "mtime": 1789963794.7947562,
+    "seen": 1790312169.3642268,
+    "ast_hash": "2969e38f0e0e0c6f81eb0c1b527aad64",
+    "semantic_hash": "2969e38f0e0e0c6f81eb0c1b527aad64"
+  },
+  "frontend/vite.config.js": {
+    "mtime": 1787589213.0570421,
+    "seen": 1790312169.3642297,
+    "ast_hash": "87c175db4989695d0be74b04e810641f",
+    "semantic_hash": "87c175db4989695d0be74b04e810641f"
+  },
+  "CLAUDE.md": {
+    "mtime": 1789962175.734262,
+    "seen": 1790312169.3642325,
+    "ast_hash": "f17c5d2be91525eeb74acc2b58cb2283",
+    "semantic_hash": "f17c5d2be91525eeb74acc2b58cb2283"
+  },
+  "api-contract.md": {
+    "mtime": 1789139792.445908,
+    "seen": 1790312169.3642354,
+    "ast_hash": "018f1787f550bc73d2eaa85caa724674",
+    "semantic_hash": "018f1787f550bc73d2eaa85caa724674"
+  },
+  "backend/requirements.txt": {
+    "mtime": 1787843952.0785546,
+    "seen": 1790312169.364238,
+    "ast_hash": "834217c2037a615612dab34c55ff5bd5",
+    "semantic_hash": "834217c2037a615612dab34c55ff5bd5"
+  },
+  "data-model.md": {
+    "mtime": 1788021288.3221512,
+    "seen": 1790312169.3642414,
+    "ast_hash": "a31f5210b0a5f4d69038e67eb445a37a",
+    "semantic_hash": "a31f5210b0a5f4d69038e67eb445a37a"
+  },
+  "degradation-model.md": {
+    "mtime": 1788105165.37123,
+    "seen": 1790312169.364244,
+    "ast_hash": "720ce8e2110be51b51d79ae045662757",
+    "semantic_hash": "720ce8e2110be51b51d79ae045662757"
+  },
+  "frontend-plan.md": {
+    "mtime": 1787587849.7138312,
+    "seen": 1790312169.364247,
+    "ast_hash": "abb92787b924ef00e4a7403e41de7ca1",
+    "semantic_hash": "abb92787b924ef00e4a7403e41de7ca1"
+  },
+  "frontend/README.md": {
+    "mtime": 1787589137.6940935,
+    "seen": 1790312169.3642502,
+    "ast_hash": "75eb386f17caf77fd6fe3ce1d90968ee",
+    "semantic_hash": "75eb386f17caf77fd6fe3ce1d90968ee"
+  },
+  "frontend/index.html": {
+    "mtime": 1787589219.1360536,
+    "seen": 1790312169.3642612,
+    "ast_hash": "20cb050bc577964962d54146efb18a94",
+    "semantic_hash": "20cb050bc577964962d54146efb18a94"
+  },
+  "simulation-logic.md": {
+    "mtime": 1788105108.3045783,
+    "seen": 1790312169.364264,
+    "ast_hash": "462de0965c5cdf33563e6ce53e24e0fa",
+    "semantic_hash": "462de0965c5cdf33563e6ce53e24e0fa"
+  },
+  "Strategy_Room_Project_Overview.pdf": {
+    "mtime": 1787580980.5358107,
+    "seen": 1790312169.3642666,
+    "ast_hash": "ee50ca8fd6a9abbec86043b19e5004ad",
+    "semantic_hash": "ee50ca8fd6a9abbec86043b19e5004ad"
+  },
+  "frontend/public/favicon.svg": {
+    "mtime": 1787589137.7663627,
+    "seen": 1790312169.3642697,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": "7e840862161341271697daa99a40d76b"
+  }
+}

@@ -132,6 +132,7 @@ function ScrollStoryScene({
       // hit-testing. Without it they stay in the DOM at opacity 0, so a keyboard
       // user could tab into an invisible scene's controls — and focusable content
       // inside aria-hidden is a WCAG 4.1.2 failure.
+      data-story-scene={index}
       inert={!isActive}
       aria-hidden={!isActive}
       aria-label={scene.label}
@@ -172,6 +173,19 @@ function ScrollStoryScene({
  * @param {number} exitTravel   Peak vertical drift in px as a scene leaves. Larger than
  *                              `travel` so the outgoing scene reads as moving away.
  * @param {boolean} showProgress Render the scene rail.
+ * @param {Function} backdrop   Optional `({ scrollYProgress, count, reduced, overlap }) => node`,
+ *                              where `overlap` is the handoff width the scenes are actually
+ *                              using (`REDUCED_OVERLAP` under reduced motion). Mounted
+ *                              once, in a layer fixed to the viewport behind the whole page rather than inside the pinned stage,
+ *                              so it is on screen from the top of the page to the bottom —
+ *                              over whatever comes before and after the story too — and
+ *                              never inherits a scene's opacity. The layer sits at a
+ *                              negative z-index, so the page must establish a stacking
+ *                              context around the story (`isolate`) for it to paint above
+ *                              the page's own background. It gets the same progress the
+ *                              scenes are driven by, so any scroll-linked keyframes in it
+ *                              must follow the same six-stops-from-0-to-1 rule as
+ *                              `sceneStops`. It must be pointer-transparent.
  */
 // With reduced motion the scenes no longer travel apart on the way out, so the
 // fades are all the seam has left to work with — and a fade with nothing moving
@@ -194,6 +208,7 @@ export default function ScrollStory({
   travel = 40,
   exitTravel = travel * 2.5,
   showProgress = true,
+  backdrop,
   className = '',
   id,
 }) {
@@ -218,9 +233,24 @@ export default function ScrollStory({
     <div
       id={id}
       ref={containerRef}
+      data-scroll-story
       className={`h-story relative w-full ${className}`}
       style={{ '--story-h': scenes.length * sceneHeight }}
     >
+      {backdrop && (
+        // `lvh`, the tallest the viewport gets, so the base colour still reaches the
+        // bottom edge while mobile chrome is hidden; the backdrop sizes its own art to
+        // the stage inside it.
+        <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-lvh">
+          {backdrop({
+            scrollYProgress,
+            count: scenes.length,
+            reduced,
+            overlap: reduced ? REDUCED_OVERLAP : overlap,
+          })}
+        </div>
+      )}
+
       <div className="sticky top-0 h-stage overflow-hidden">
         <div className="relative h-full w-full">
           {scenes.map((scene, index) => (

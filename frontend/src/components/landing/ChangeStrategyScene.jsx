@@ -66,7 +66,7 @@ export default function ChangeStrategyScene({ race, driver, strategy, onChange }
   const stints = buildStints(buildHypotheticalStrategy(driver, strategy), lastLap)
 
   return frame(
-    <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
+    <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900 p-5 sm:p-7">
       <div className="flex items-baseline justify-between gap-4 text-left">
         <div>
           <p className="text-[0.65rem] tracking-[0.2em] text-neutral-400 uppercase">

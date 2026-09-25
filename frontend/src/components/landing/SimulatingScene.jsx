@@ -159,7 +159,7 @@ export default function SimulatingScene({
       {!driver ? (
         <PickFirst />
       ) : (
-        <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900 p-5 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-left">
             <p className="text-[0.65rem] tracking-[0.2em] text-neutral-400 uppercase">
               Degradation model

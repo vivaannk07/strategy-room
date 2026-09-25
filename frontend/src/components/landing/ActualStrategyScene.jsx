@@ -46,7 +46,7 @@ export default function ActualStrategyScene({ race, driver, laps }) {
   const columns = Math.max(stops.length, 1) + (fastest ? 1 : 0)
 
   return frame(
-    <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 sm:p-7">
+    <div className="mx-auto max-w-2xl rounded-2xl border border-neutral-800 bg-neutral-900 p-5 sm:p-7">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-left">
         <p className="text-sm font-medium text-neutral-100">
           {driver.driver_name}
